@@ -114,7 +114,8 @@ char* get_page(const char *host)
 	char *webpage = calloc(BUFFER_SIZE, sizeof(int));
 
 	do
-	{
+	{	
+		
 		a = read(sfd, buffer, BUFFER_SIZE);
 		// Realloc webpage to store new data
 		webpage = realloc(webpage, strlen(webpage) + a);
@@ -128,7 +129,7 @@ char* get_page(const char *host)
 	free(query);
 	free(buffer);
 	freeaddrinfo(result);
-
+	
 	return webpage;
 }
 
