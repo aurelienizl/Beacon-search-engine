@@ -9,6 +9,7 @@
 
 const size_t BUFFER_SIZE = 32;
 
+
 void rewrite(int fd, const void *buf, size_t count)
 {
 	ssize_t res;
