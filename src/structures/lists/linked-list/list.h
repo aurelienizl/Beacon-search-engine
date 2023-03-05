@@ -62,61 +62,143 @@ int count(struct list *list);
 
 // ----OPERATIONS---- //
 
-// Initialize the sentinel of an empty list.
+/**
+ * @brief Create a new list
+ * @return struct list* 
+ */
+
 struct list *new_list();
 
-// Return a new element 
+/**
+ * @brief Create a new element
+ * @param data 
+ * @return struct list* 
+ */
+
 struct list *new_element(void* data);
 
-// Delete the element 
+/**
+ * @brief Remove an element from the list
+ * @param element 
+ */
+
 void remove_element(struct list *element);
 
-// Add the element on the top of the list, just after the sentinel.
+/**
+ * @brief Add an element to the top of the list
+ * @param list 
+ * @param element 
+ */
+
 void add_top(struct list *list, struct list *element);
 
-// Add the element at the end of the list.
+/**
+ * @brief Add an element to the end of the list
+ * @param list 
+ * @param element 
+ */
+
 void add_end(struct list *list, struct list *element);
 
-// Add the node next to the element
+/**
+ * @brief Add an element before the node
+ * @param element 
+ * @param node 
+ */
+
 void add_to(struct list *element, struct list *node);
 
-// Swap two element in the list if they exists. 
-// Otherwise, do nothing. 
+/**
+ * @brief Swap two elements in the list
+ * @param element1 
+ * @param element2 
+ */
+
 void swap(struct list *element1, struct list *element2);
 
-// Sort the list. 
+/**
+ * @brief Sort the list
+ * @param list 
+ */
+
 void sort(struct list *list);
 
-// Sort the list in descending order.
+/**
+ * @brief Sort the list in reverse order
+ * @param list 
+ */
+
 void sort_reverse(struct list *list);
 
-// Remove the element at index
-// If index is out of range, do nothing
+/**
+ * @brief Remove an element at the given index
+ * @param list 
+ * @param index
+ */
 void remove_at(struct list *list, int index);
 
-// Remove the last element of the list 
+/**
+ * @brief Remove the last element of the list
+ * @param list 
+ */
+
 void remove_last(struct list *list);
 
-// Remove the first element of the list
+/**
+ * @brief Remove the first element of the list
+ * @param list 
+ */
+
 void remove_first(struct list *list);
 
-// Remove the list 
+/**
+ * @brief Remove the list
+ * @param list 
+ */
+
 void remove_list(struct list *list);
 
-// Clear the list, keep only the sentinel
+/**
+ * @brief Clear the list
+ * @param list 
+ */
+
 void clear(struct list **list);
 
-// Insert the element at index, if index is out of range do nothing 
+/**
+ * @brief Insert an element at the given index
+ * @param list 
+ * @param element
+ * @param index
+ */
+
 void insert_at(struct list *list, struct list *element, int index);
 
-// Insert the element before the node 
+/**
+ * @brief Insert an element before the given node
+ * @param list 
+ * @param node 
+ * @param element 
+ */
+
 void insert_before(struct list *list, struct list *node, struct list *element);
 
-// Insert the element after the node 
+/**
+ * @brief Insert an element after the given node
+ * @param list 
+ * @param node 
+ * @param element 
+ */
+
 void insert_after(struct list *list, struct list *node, struct list *element);
 
-// Return the element at index 
-// If index is out of range return the last element
+/**
+ * @brief Get the element at the given index
+ * @param list 
+ * @param index
+ * @return struct list* 
+ */
+
 struct list *get_at(struct list *list, int index);
 
 #endif

@@ -20,7 +20,6 @@ int main(int argc, const char **argv)
     printf("%s\n", page.data);
   }
 
-
   free(page.data);
   return 0;
 }
