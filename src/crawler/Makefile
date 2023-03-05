@@ -1,30 +1,17 @@
-# Simple mini Makefile
+CC = gcc
+CFLAGS = -Wall -g
+LIBS = -lcurl
+SRCS = main.c crawler.c
+OBJS = $(SRCS:.c=.o)
+TARGET = crawler
 
-CC=gcc
-CPPFLAGS=  
-CFLAGS= -Wall -Wextra -std=c99  -lpthread -D_REENTRANT
-LDFLAGS=
-LDLIBS= 
+all: $(TARGET)
 
-all: release
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
 
-release: CFLAGS += -O2 -DNDBUG
-release: main.o crawler.o
-release: 
-		$(CC) $^ -o prog
-
-
-check: CFLAGS += -g 
-check: main.o crawler.o
-check:
-		$(CC) $^ -o test-suite 
-		###########################################
-		valgrind --leak-check=full ./test-suite example.com
-		###########################################
-		make clean
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-		${RM} prog
-		${RM} test-suite 
-		${RM} *.o
-		${RM} *.gch
+	rm -f $(OBJS) $(TARGET)

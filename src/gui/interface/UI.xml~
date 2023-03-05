@@ -2,7 +2,7 @@
 <!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.24"/>
-  <object class="GtkTextBuffer" id="databaseLocation">
+  <object class="GtkTextBuffer" id="databaseInfo">
     <property name="text" translatable="yes">DB :  /home/lucien/Desktop/Epita/Project.db
 DB Size : 230 MB</property>
   </object>
@@ -214,7 +214,7 @@ DB Size : 230 MB</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
             <property name="wrap-mode">word</property>
-            <property name="buffer">databaseLocation</property>
+            <property name="buffer">databaseInfo</property>
           </object>
           <packing>
             <property name="y">550</property>

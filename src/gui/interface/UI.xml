@@ -213,8 +213,12 @@ DB Size : 230 MB</property>
             <property name="width-request">380</property>
             <property name="visible">True</property>
             <property name="can-focus">True</property>
+            <property name="editable">False</property>
             <property name="wrap-mode">word</property>
+            <property name="cursor-visible">False</property>
             <property name="buffer">databaseInfo</property>
+            <property name="accepts-tab">False</property>
+            <property name="input-purpose">name</property>
           </object>
           <packing>
             <property name="y">550</property>
