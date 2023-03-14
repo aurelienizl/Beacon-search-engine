@@ -24,7 +24,7 @@ char *string_concat(char *str1, char *str2)
 
 char *string_to_heap(char *string, size_t string_size)
 {
-    char *string_to_heap = malloc(string_size + 1); 
+    char *string_to_heap = calloc(string_size + 1, sizeof(char));
     if (string_to_heap == NULL) {
         fprintf(stderr, "Failed to allocate memory for string_to_heap\n");
         exit(1);
