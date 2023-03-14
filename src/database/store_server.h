@@ -48,20 +48,39 @@ struct data
     size_t data_capacity;
 };
 
+/*
+** @note: The following section contains declarations of compression.c file
+*/
+
 void compress_data(struct data *data);
 
 void decompress_data(struct data *data);
 
+/*
+** @note: The following section contains declarations of crypto.c file
+*/
+
 char* sha1_hash(const unsigned char *data, size_t len);
 
-void add_to_server(char* page, size_t page_size, char* url, size_t url_size);
+/*
+** @note: The following section contains declarations of store_server.c file
+*/
+
+struct webpage create_webpage(char* url, size_t url_size, char* content, size_t content_size);
+
+unsigned char* read_webpage(char* url, size_t url_size);
 
 void normalize_html(char* html, size_t *html_size);
 
-void write_page_to_disk(struct webpage *webpage);
+void write_webpage(struct webpage *webpage);
 
-char *get_first_file_in_path(char *path);
+void add_to_server(char* page, size_t page_size, char* url, size_t url_size);
 
-unsigned char* get_page_from_disk_with_url(char* url, size_t url_size);
+/*
+** @note: The following section contains declarations of io.c file
+*/
+
+char *io_get_file(char *path);
+
 
 #endif
