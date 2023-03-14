@@ -42,3 +42,11 @@ size_t HandleCallback(void *content, size_t size, size_t nmemb, void *userp);
  **/
 
 int GetPage(const char *url, const char *user_agent, Memory *Memory);
+
+/**
+ * @brief Crawl url
+ * @param url URL
+ * @return Pointer to data
+ **/
+
+char* crawl(char* url);

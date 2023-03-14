@@ -86,3 +86,14 @@ int GetPage(const char *url, const char *user_agent, Memory *content)
 
   return 0;
 }
+
+char* crawl(char* url)
+{
+  Memory content;
+  content.data = malloc(1);
+  content.size = 0;
+
+  GetPage(url, NULL, &content);
+
+  return content.data;
+}
