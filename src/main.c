@@ -29,20 +29,14 @@ void init_db(char *url)
         printf("Writing %s\n", webpage.url);
         write_webpage(&webpage);
 
-        // Analyse des liens de page
-	struct list* url_list = parser(data, url);
+        // Print the length of the webpage
+        printf("Length of webpage: %ld\n", strlen(data));
 
-	struct list *current = url_list;
-	while(current != NULL)
-	{
-		addstack(stack, (char *)current->data);
-		current = current->next;
-	}
+        // Print the content of the webpage
+        char* content = read_webpage(url, strlen(webpage.url));
+        printf("Content of webpage: %s\n", content);
 
-	free(url_list);
-        free(current);
-
-	free(url);
+	    free(url);
         free(data);
         free(webpage.url);
         free(webpage.content->data);
@@ -55,7 +49,7 @@ void init_db(char *url)
 void tests()
 {
 
-    char *url1 = string_to_heap("http://www.citizendium.org/wiki/Welcome_to_Citizendium", 52);
+    char *url1 = string_to_heap("https://github.com/", 20);
 
     init_db(url1);
 }
