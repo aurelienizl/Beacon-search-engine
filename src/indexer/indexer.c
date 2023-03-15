@@ -128,7 +128,10 @@ void add_link(struct list *links, char *file, int *i, char *domain)
 		//in case there's still space in link
 		link = realloc(link, pos);
 		if(check_domain(link, domain))
+		{
 			add_top(links, new_element(link));
+			printf("added link : %s\n", link);
+		}
 	}
 
 	//moving out of the tag : add attribute processing later
@@ -157,7 +160,7 @@ void add_link(struct list *links, char *file, int *i, char *domain)
 //skips uninteresting tags, stops at >
 void skip_tag(char *file, int *i, char *tag, struct list *links, char *domain)
 {
-	printf("\n|skipping, tag = %s| --------------------\n", tag);
+	//printf("\n|skipping, tag = %s| --------------------\n", tag);
 	char c;
 
 	//skip or process tag content
@@ -203,7 +206,7 @@ check_again:
 	//skip the last tag character
 	(*i)++;
 	c = file[*i];
-	printf("\n---------------------------------------\n");
+	//printf("\n---------------------------------------\n");
 }
 
 //parses found paragraph and extracts links
@@ -211,7 +214,7 @@ void add_words(struct list *links, char *file, int *i, char *domain)
 {
 	(*i)++;
 	char c = file[*i];
-	printf("\nparagraph========================\n");
+	//printf("\nparagraph========================\n");
 
 	//skip over paragraph opening tag
 	while(c != '>')
@@ -264,7 +267,7 @@ tag_processing:
 					//skip over paragraph closing tag
 					(*i) = (*i) + 2;
 					c = file[*i];
-					printf("\n==================================\n");
+					//printf("\n==================================\n");
 					return;	
 				//skip uninteresting tag
 				default:
