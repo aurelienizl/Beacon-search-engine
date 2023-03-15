@@ -36,6 +36,7 @@ void init_db(char *url)
         char* content = read_webpage(url, strlen(webpage.url));
         printf("Content of webpage: %s\n", content);
 
+        free(content);
 	    free(url);
         free(data);
         free(webpage.url);
