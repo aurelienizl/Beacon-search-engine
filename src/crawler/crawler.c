@@ -19,6 +19,9 @@ size_t HandleCallback(void *contents, size_t size, size_t nmemb, void *userdata)
     return 0;
   }
 
+  // Clear memory using explicit_bzero()
+  explicit_bzero(&(content->data[content->size]), total_size + 1);
+
   // Copy contents to data
   memcpy(&(content->data[content->size]), contents, total_size);
 
