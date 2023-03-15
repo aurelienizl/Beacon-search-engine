@@ -6,7 +6,7 @@
 
 #include "store_server.h"
 
-struct webpage create_webpage(char* url, size_t url_size, char* content, size_t content_size)
+struct webpage create_webpage(char *url, size_t url_size, char *content, size_t content_size)
 {
     struct webpage webpage;
 
@@ -51,7 +51,7 @@ void write_webpage(struct webpage *webpage)
     }
 
     char *path = string_concat(full_folder_name, "/");
-    char* path_full = string_concat(path, file_name);
+    char *path_full = string_concat(path, file_name);
 
     FILE *file = fopen(path_full, "w");
 
@@ -78,7 +78,7 @@ void normalize_html(char *html, size_t *html_size)
     }
 }
 
-unsigned char* read_webpage(char *url, size_t url_size)
+unsigned char *read_webpage(char *url, size_t url_size)
 {
     char *db_directory = string_to_heap("db/", 3);
 
@@ -86,7 +86,7 @@ unsigned char* read_webpage(char *url, size_t url_size)
 
     char *path = string_concat(db_directory, folder_name);
 
-    char* file_path = io_get_file(path);
+    char *file_path = io_get_file(path);
 
     FILE *file = fopen(file_path, "r");
 
@@ -104,7 +104,7 @@ unsigned char* read_webpage(char *url, size_t url_size)
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    unsigned char *buffer = (unsigned char *)calloc(sizeof(unsigned char),(file_size + 1));
+    unsigned char *buffer = (unsigned char *)calloc(sizeof(unsigned char), (file_size + 1));
 
     fread(buffer, 1, file_size, file);
     buffer[file_size] = '\0';
@@ -116,10 +116,9 @@ unsigned char* read_webpage(char *url, size_t url_size)
     data->data_size = file_size;
     data->data_capacity = 256000;
 
-
     decompress_data(data);
 
-    unsigned char* res = data->data;
+    unsigned char *res = data->data;
 
     free(db_directory);
     free(folder_name);
@@ -128,4 +127,29 @@ unsigned char* read_webpage(char *url, size_t url_size)
     free(file_path);
 
     return res;
+}
+
+int exist_webpage(char *url, size_t url_size)
+{
+    char *db_directory = string_to_heap("db/", 3);
+    char *folder_name = sha1_hash((const unsigned char *)url, url_size);
+    char* path = string_concat(db_directory, folder_name);
+
+    DIR *dir = opendir(path);
+    if (dir)
+    {
+        free(path);
+        free(db_directory);
+        free(folder_name);
+        closedir(dir);
+        return 1;
+    }
+    else
+    {
+        free(path);
+        free(db_directory);
+        free(folder_name);
+        closedir(dir);
+        return 0;
+    }
 }

@@ -74,7 +74,7 @@ void normalize_html(char* html, size_t *html_size);
 
 void write_webpage(struct webpage *webpage);
 
-void add_to_server(char* page, size_t page_size, char* url, size_t url_size);
+int exist_webpage(char* url, size_t url_size);
 
 /*
 ** @note: The following section contains declarations of io.c file

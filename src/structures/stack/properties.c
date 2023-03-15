@@ -6,7 +6,7 @@
 
 #include "stack.h"
 
-int is_empty(struct stack *stack)
+int is_empty_stack(struct stack *stack)
 {
     if(stack->last == NULL)
     {

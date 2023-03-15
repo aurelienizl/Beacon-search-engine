@@ -49,7 +49,7 @@ struct stack *new_stack();
 ** @return        1 if true, 0 if false.
 */
 
-int is_empty(struct stack *stack);
+int is_empty_stack(struct stack *stack);
 
 /**
 ** @brief         Add element to the stack.
