@@ -50,7 +50,7 @@ int check_domain(char *link, char *domain)
 //length of the tag is given
 int check_tag(char *file, int *i, char *tag, size_t len)
 {
-	int j = 1;
+	size_t j = 1;
 	char c = file[*i];
 
 	while(c != '\0' && j < len)
@@ -257,6 +257,7 @@ tag_processing:
 					else
 					{
 						skip_tag(file, i, "a", links, domain);
+						break;
 					}
 				//end of paragraph
 				case '/':
