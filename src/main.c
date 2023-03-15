@@ -8,6 +8,7 @@
 #include "database/store_server.h"
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
+#include "indexer/indexer.h"
 
 void init_db(char *url)
 {
@@ -29,10 +30,19 @@ void init_db(char *url)
         write_webpage(&webpage);
 
         // Analyse des liens de page
-        // J'ajoute dans la pile
-        // Je continue
+	struct list* url_list = parser(data, url);
 
-        free(url);
+	struct list *current = url_list;
+	while(current != NULL)
+	{
+		addstack(stack, (char *)current->data);
+		current = current->next;
+	}
+
+	free(url_list);
+        free(current);
+
+	free(url);
         free(data);
         free(webpage.url);
         free(webpage.content->data);

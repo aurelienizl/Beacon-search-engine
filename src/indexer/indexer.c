@@ -1,36 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../structures/lists/linked-list/list.h"
 
 char htag[9] = "a href=\"";
 
-struct list *new_list()
+char* get_domain(char *link)
 {
-	struct list *head = NULL; 
-	head = malloc(sizeof(struct list));
-	head->next = NULL;
-	head->data = NULL;
-	return head;
-}
+	char start[5] = "http";
+	char *domain = malloc(sizeof(char) * strlen(link));
+	size_t i = 0;
+	int nslash = 0;
 
-struct list *new_element(char *data)
-{
-	struct list *head = NULL;
-	head = malloc(sizeof(struct list));
-	head->next = NULL;
-	head->data = data;
-	return head;
-}
+	while(link[i] == start[i])	
+		i++;
+	
+	if(i != 4)
+		return NULL;
 
-void add_top(struct list *list, struct list *element)
-{
-	if(list->next == NULL)
+	while(link[i] != '\0' && nslash < 3)
 	{
-		list->next = element;
-		return;
+		if(link[i] == '/')
+			nslash++;
+
+		domain[i] = link[i];
+		i++;
 	}
-	element->next = list->next;
-	list->next = element;
+
+	domain[i] = '/';
+	domain[i+1] = '\0';
+
+	domain = realloc(domain, sizeof(char) *(i+1));
+	return domain;
+}
+
+int check_domain(char *link, char *domain)
+{
+	size_t i = 0; 
+	while(domain[i] == link[i] && link[i] != '\0')
+		i++;
+
+	if(link[i] == '\0' || domain[i] == '\0')
+		return 1;
+
+	return 0;
 }
 
 //checks after the offset if tag is a prefix
@@ -81,7 +94,7 @@ void get_tag(char* file, int*i, char c, char **tag)
 }
 
 //add the link conrained between the a tags to links
-void add_link(struct list *links, char *file, int *i)
+void add_link(struct list *links, char *file, int *i, char *domain)
 {
 	char c;
 	int pos = 0;
@@ -114,7 +127,8 @@ void add_link(struct list *links, char *file, int *i)
 	{
 		//in case there's still space in link
 		link = realloc(link, pos);
-		add_top(links, new_element(link));
+		if(check_domain(link, domain))
+			add_top(links, new_element(link));
 	}
 
 	//moving out of the tag : add attribute processing later
@@ -141,7 +155,7 @@ void add_link(struct list *links, char *file, int *i)
 }
 
 //skips uninteresting tags, stops at >
-void skip_tag(char *file, int *i, char *tag, struct list *links)
+void skip_tag(char *file, int *i, char *tag, struct list *links, char *domain)
 {
 	printf("\n|skipping, tag = %s| --------------------\n", tag);
 	char c;
@@ -169,7 +183,7 @@ check_again:
 			{
 				if(check_tag(file, i, htag, 8))
 				{
-					add_link(links, file, i);
+					add_link(links, file, i, domain);
 					(*i)++;
 					if((c = file[*i]) == '\0')
 						return;
@@ -193,7 +207,7 @@ check_again:
 }
 
 //parses found paragraph and extracts links
-void add_words(struct list *links, char *file, int *i)
+void add_words(struct list *links, char *file, int *i, char *domain)
 {
 	(*i)++;
 	char c = file[*i];
@@ -231,7 +245,7 @@ tag_processing:
 				case 'a':
 					if(check_tag(file, i, htag, 8))
 					{
-						add_link(links, file, i);
+						add_link(links, file, i, domain);
 						(*i)++;
 						if((c = file[*i]) == '\0')
 							return;
@@ -242,7 +256,7 @@ tag_processing:
 					}
 					else
 					{
-						skip_tag(file, i, "a", links);
+						skip_tag(file, i, "a", links, domain);
 					}
 				//end of paragraph
 				case '/':
@@ -254,7 +268,7 @@ tag_processing:
 				//skip uninteresting tag
 				default:
 					get_tag(file, i, c, &tag);
-					skip_tag(file, i, tag, links);
+					skip_tag(file, i, tag, links, domain);
 					(*i)++;
 					if((c = file[*i]) == '\0')
 						return;
@@ -292,9 +306,10 @@ tag_processing:
 }
 
 //parses the whole file
-struct list *parser(char* file)
+struct list *parser(char* file, char* link)
 {
 	char c;
+	char *domain = get_domain(link);
 
 	struct list *links = new_list();
 
@@ -313,12 +328,12 @@ struct list *parser(char* file)
 				case 'a':
 					if(check_tag(file, i, htag, 8))
 					{
-						add_link(links, file, i);
+						add_link(links, file, i, domain);
 					}
 					break;
 				//extract paragraph
 				case 'p':
-					add_words(links, file, i);
+					add_words(links, file, i, domain);
 					(*i)++;
 					if((c = file[*i]) == '\0')
 						return links;
@@ -328,5 +343,7 @@ struct list *parser(char* file)
 		(*i)++;
 	}
 	free(i);
+	free(domain);
 	return links;
 }
+
