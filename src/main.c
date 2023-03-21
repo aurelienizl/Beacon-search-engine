@@ -33,11 +33,19 @@ void init_db(char *url)
         printf("Length of webpage: %ld\n", strlen(data));
 
         // Print the content of the webpage
-        char* content = read_webpage(url, strlen(webpage.url));
+        char* content = (char *)read_webpage(url, strlen(webpage.url));
         printf("Content of webpage: %s\n", content);
 
+	struct list *url_list = parser(data, url);
+	struct list *current = url_list->next;
+	while(current != NULL)
+	{
+		printf("%s\n", (char *)current->data);
+		current = current->next;
+	}
+
         free(content);
-	    free(url);
+	free(url);
         free(data);
         free(webpage.url);
         free(webpage.content->data);
@@ -50,7 +58,7 @@ void init_db(char *url)
 void tests()
 {
 
-    char *url1 = string_to_heap("https://github.com/", 20);
+    char *url1 = string_to_heap("https://baseball-reference.com//", 31);
 
     init_db(url1);
 }

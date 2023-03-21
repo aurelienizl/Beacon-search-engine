@@ -16,9 +16,6 @@ char* get_domain(char *link)
 	{	
 		i++;
 	}
-
-	if(link[i] == 's')
-		i++;
 	
 	if(i != 4)
 		return NULL;
@@ -34,7 +31,7 @@ char* get_domain(char *link)
 		j++;
 	}
 
-	domain[j] = '\0';
+	domain[j+1] = '\0';
 
 	domain = realloc(domain, sizeof(char) *(i+1));
 	printf("link :%s\n", link);
@@ -44,35 +41,26 @@ char* get_domain(char *link)
 
 int check_domain(char *link, char *domain)
 {
-	printf("checking domain\n");
 	size_t i = 0;
 	char start[5] = "http"; 	
+	printf("checking link: %s\n", link);
 	while(link[i] == start[i])
 	{
 		i++;
 	}
-	printf("http verified\n");
 
 	if(link[i] == 's')
+		i++;
+
+	while(domain[i] == link[i] && link[i] != '\0')
 	{
 		i++;
-		printf("skipping s\n");
 	}
-
-	size_t j = 0;
-	while(domain[j] == link[i] && link[i] != '\0')
+	if(link[i] == '\0' || domain[i] == '\0')
 	{
-		i++;
-		j++;
-		printf("%c",domain[i]);
-	}
-	printf("left loop 1\n");
-
-	if(link[i] == '\0' || domain[j] == '\0')
-	{
+		printf("this link is valid %s\n", link);
 		return 1;
 	}
-
 
 	return 0;
 }
@@ -81,13 +69,12 @@ int check_domain(char *link, char *domain)
 //length of the tag is given
 int check_tag(char *file, int *i, char *tag, size_t len)
 {
-	printf("= checking tag %s :", tag);
+	//printf("checking tag %s, found : \n", tag);
 	size_t j = 1;
 	(*i)++;
 	char c = file[*i];
-	int l = strlen(file);
 
-	while(*i < l && j < len)
+	while(c != '\0' && j < len)
 	{
 		c = file[*i];
 		if(c != tag[j])
@@ -96,7 +83,7 @@ int check_tag(char *file, int *i, char *tag, size_t len)
 		(*i)++;
 	}
 
-	printf(" %i\n", (j == len));
+	//printf("\ntag status = %i\n", (j == len));
 	return (j == len);
 }
 
@@ -107,10 +94,9 @@ void get_tag(char* file, int*i, char c, char **tag)
 	(*tag)[0] = c;
 	(*i)++;
 	c = file[*i];
-	int l = strlen(file);
 	int pos = 1;
 
-	while(*i < l  && c != ' ')
+	while(c != '\0' && c != ' ')
 	{
 		if(c == '>')
 			break;
@@ -123,26 +109,25 @@ void get_tag(char* file, int*i, char c, char **tag)
 	(*tag)[pos] = '\0';
 	(*tag) = realloc((*tag), pos);
 
-	while(*i < l && c != '>')
+	while(c != '\0' && c != '>')
 	{
 		(*i)++;
 		c = file[*i];
 	}
+
+	printf("tag = %s\n", *tag);
 }
 
 //add the link conrained between the a tags to links
 void add_link(struct list *links, char *file, int *i, char *domain)
 {
-	printf("==== potential link addition: \n");
 	char c;
 	int pos = 0;
-	int l = strlen(file);
 	char *link = malloc(sizeof(char)*256);
 	
 	//(*i)++;
-	while(*i < l && pos < 256)
+	while((c = file[*i]) != '\0' && pos < 256)
 	{
-		c = file[*i];
 		if(c == '\"')
 		{
 			(*i)++;
@@ -167,19 +152,13 @@ void add_link(struct list *links, char *file, int *i, char *domain)
 	{
 		//in case there's still space in link
 		link = realloc(link, pos);
-		printf("resulting link : %s , added?\n", link);
 		if(check_domain(link, domain))
 		{
 			add_top(links, new_element(link));
-			printf("yes\n");
-		}
-		else
-		{
-			printf("no\n");
+			printf("added link : %s\n", link);
 		}
 	}
 
-	printf("attributes : \n");
 	//moving out of the tag : add attribute processing later
 	if(c == ' ')
 	{
@@ -187,36 +166,32 @@ void add_link(struct list *links, char *file, int *i, char *domain)
 		{
 			(*i)++;
 			c = file[*i];
-			printf("%c",c);
 			//ATTRIBUTE PROCESSING GOES HERE
 		}
 	}
 	(*i)++;
 	c = file[*i];
 
-	printf("\nremainder : \n");
 	//move the offset to the end of the closing tag
 	while(c != '>')
 	{
+		//printf("%c", c);
 		(*i)++;
 		c = file[*i];
-		printf("%c",c);
 	}
-	printf("\n\n");
+	//printf("\n");
 }
 
 //skips uninteresting tags, stops at >
 void skip_tag(char *file, int *i, char *tag, struct list *links, char *domain)
 {
-	printf("=== skipping tag %s :\n", tag);
+	//printf("\n|skipping, tag = %s| --------------------\n", tag);
 	char c;
-	int l = strlen(file);
 
 	//skip or process tag content
 	(*i)++;
-	while(*i < l)
+	while((c = file[*i]) != '\0')
 	{
-		c = file[*i];
 check_again:
 		if(c == '<')
 		{
@@ -238,9 +213,8 @@ check_again:
 				{
 					add_link(links, file, i, domain);
 					(*i)++;
-					if(*i >= l)
+					if((c = file[*i]) == '\0')
 						return;
-					c = file[*i];
 					//to solve for successive tags
 					if(c == '<')
 						goto check_again;
@@ -248,23 +222,24 @@ check_again:
 
 			}
 		}
+		printf("%c",c);
 		//CONTENT PROCESSING GOES HERE
 		(*i)++;
 
 	}
 
 	//skip the last tag character
+	(*i)++;
 	c = file[*i];
-	printf("\n\n");
+	//printf("\n---------------------------------------\n");
 }
 
 //parses found paragraph and extracts links
 void add_words(struct list *links, char *file, int *i, char *domain)
 {
-	printf("=== extracting words starting from %c :\n", file[*i + 1]);
 	(*i)++;
 	char c = file[*i];
-	int l = strlen(file);
+	//printf("\nparagraph========================\n");
 
 	//skip over paragraph opening tag
 	while(c != '>')
@@ -278,9 +253,8 @@ void add_words(struct list *links, char *file, int *i, char *domain)
 	char *tag = malloc(sizeof(char)*16);
 	
 	(*i)++;
-	while(*i < l && pos < 64)
+	while((c = file[*i]) != '\0' && pos < 64)
 	{
-		c = file[*i];
 		//treat tags
 		if(c == '<')
 		{
@@ -301,11 +275,8 @@ tag_processing:
 					{
 						add_link(links, file, i, domain);
 						(*i)++;
-						if(*i >= l)
-						{
+						if((c = file[*i]) == '\0')
 							return;
-						}
-						c = file[*i];
 						//to solve for successive tags
 						if(c == '<')
 							goto tag_processing;
@@ -321,16 +292,15 @@ tag_processing:
 					//skip over paragraph closing tag
 					(*i) = (*i) + 2;
 					c = file[*i];
-					printf("==== word extraction ended");
+					//printf("\n==================================\n");
 					return;	
 				//skip uninteresting tag
 				default:
 					get_tag(file, i, c, &tag);
 					skip_tag(file, i, tag, links, domain);
 					(*i)++;
-					if(*i >= l)
+					if((c = file[*i]) == '\0')
 						return;
-					c = file[*i];
 					//to solve for successive tags
 					if(c == '<')
 						goto tag_processing;
@@ -356,13 +326,11 @@ tag_processing:
 			pos++;
 		}
 
-		(*i)++;
 	}
 
 	//free
 	if(word != NULL)
 		free(word);
-	printf("\n\n");
 
 }
 
@@ -371,7 +339,6 @@ struct list *parser(char* file, char* link)
 {
 	char c;
 	char *domain = get_domain(link);
-	printf("first letter of domain is %c", domain[0]);
 	int l = strlen(file);
 
 	struct list *links = new_list();
@@ -379,9 +346,9 @@ struct list *parser(char* file, char* link)
 	int *i = calloc(sizeof(int), 1);
 	(*i) = 0;
 
-	while(*i < l)
+	while((c = file[*i]) != '\0')
 	{
-		c = file[*i];
+		//printf("%c", c);
 		if (c == '<')
 		{
 			(*i)++;
@@ -392,6 +359,7 @@ struct list *parser(char* file, char* link)
 				case 'a':
 					if(check_tag(file, i, htag, 8))
 					{
+						//printf("adding a link\n");
 						add_link(links, file, i, domain);
 					}
 					break;
@@ -400,7 +368,7 @@ struct list *parser(char* file, char* link)
 				case 'p':
 					add_words(links, file, i, domain);
 					(*i)++;
-					if(*i >= l)
+					if((c = file[*i]) == '\0')
 						return links;
 					break;
 			}
