@@ -8,7 +8,8 @@
 #include "database/store_server.h"
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
-#include "indexer/indexer.h"
+//#include "indexer/indexer.h"
+#include "indexer/link_extractor.h"
 
 void init_db(char *url)
 {
@@ -34,18 +35,13 @@ void init_db(char *url)
 
         // Print the content of the webpage
         char *content = (char *)read_webpage(url, strlen(webpage.url));
-        printf("Content of webpage: %s\n", content);
+        printf("Content of webpage: %s\n\n\n\n", content);
 
-
-        return;
-
-        struct list *url_list = parser(data, url);
-        struct list *current = url_list->next;
-        while (current != NULL)
-        {
-            printf("%s\n", (char *)current->data);
-            current = current->next;
-        }
+        //struct list *url_list = new_list();
+	//bparser(&url_list, data, url, strlen(data));
+    
+	//printf("\n%s\n", (char *)url_list->next->data);
+	
 
         //free(content);
         free(url);

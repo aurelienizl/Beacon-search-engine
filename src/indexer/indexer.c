@@ -36,7 +36,7 @@ char* get_domain(char *link)
 
 	domain[j] = '\0';
 
-	domain = realloc(domain, sizeof(char) *(i+1));
+	domain = realloc(domain, sizeof(char) *(j+1));
 	printf("link :%s\n", link);
 	printf("domain :%s\n", domain);
 	return domain;
@@ -123,11 +123,13 @@ void get_tag(char* file, int*i, char c, char **tag)
 	(*tag)[pos] = '\0';
 	(*tag) = realloc((*tag), pos);
 
+	/*
 	while(*i < l && c != '>')
 	{
 		(*i)++;
 		c = file[*i];
 	}
+	*/
 }
 
 //add the link conrained between the a tags to links

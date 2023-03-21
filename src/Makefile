@@ -11,7 +11,7 @@ OPENSSL_LIB := -lcrypto
 
 # Source files
 SRC := crawler/crawler.c database/store_server.c structures/string/operations.c main.c database/compression.c database/crypto.c database/io.c \
-structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/indexer.c
+structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/link_extractor.c
 # Object files
 OBJ := $(SRC:.c=.o)
 
