@@ -14,6 +14,6 @@
 
 char* string_concat(char* str1, char* str2);
 
-char *string_to_heap(char *string, size_t string_size);
+char *string_to_heap(char *string);
 
 #endif

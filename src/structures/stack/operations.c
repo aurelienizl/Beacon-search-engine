@@ -49,7 +49,7 @@ void* unstack(struct stack *stack)
         size_t size = strlen(data);
         char *new_space = malloc(sizeof(char) * (size + 1));
         strncpy(new_space, data, size);
-        new_space[size - 1] = '\0';
+        new_space[size] = '\0';
         stack->last = stack->last->prev;
         free(last->data);
         free(last);

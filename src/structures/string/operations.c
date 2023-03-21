@@ -22,14 +22,9 @@ char *string_concat(char *str1, char *str2)
 }
 
 
-char *string_to_heap(char *string, size_t string_size)
+char *string_to_heap(char *string)
 {
-    char *string_to_heap = calloc(string_size + 1, sizeof(char));
-    if (string_to_heap == NULL) {
-        fprintf(stderr, "Failed to allocate memory for string_to_heap\n");
-        exit(1);
-    }
-    strncpy(string_to_heap, string, string_size);
-    string_to_heap[string_size] = '\0'; 
-    return string_to_heap;
+    char *buffer = calloc(sizeof(char), strlen(string));
+    memcpy(buffer, string, strlen(string));
+    return buffer;
 }

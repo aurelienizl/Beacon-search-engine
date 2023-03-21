@@ -34,11 +34,11 @@ struct webpage create_webpage(char *url, size_t url_size, char *content, size_t 
 
 void write_webpage(struct webpage *webpage)
 {
-    char *db_directory = string_to_heap("db/", 3);
+    char *db_directory = string_to_heap("db/");
 
     char *full_folder_name = string_concat(db_directory, webpage->checksum);
 
-    char *file_name = string_to_heap("index.html", 10);
+    char *file_name = string_to_heap("index.html");
 
     if (access(db_directory, F_OK) == -1)
     {
@@ -80,7 +80,7 @@ void normalize_html(char *html, size_t *html_size)
 
 unsigned char *read_webpage(char *url, size_t url_size)
 {
-    char *db_directory = string_to_heap("db/", 3);
+    char *db_directory = string_to_heap("db/");
 
     char *folder_name = sha1_hash((const unsigned char *)url, url_size);
 
@@ -131,7 +131,7 @@ unsigned char *read_webpage(char *url, size_t url_size)
 
 int exist_webpage(char *url, size_t url_size)
 {
-    char *db_directory = string_to_heap("db/", 3);
+    char *db_directory = string_to_heap("db/");
     char *folder_name = sha1_hash((const unsigned char *)url, url_size);
     char* path = string_concat(db_directory, folder_name);
 

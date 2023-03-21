@@ -17,13 +17,13 @@ void init_db(char *url)
     while (!is_empty_stack(stack))
     {
         char *url = unstack(stack);
+        printf("Crawling %s\n", url);
         if (exist_webpage(url, strlen(url)))
         {
             printf("Website %s already crawled\n", url);
             free(url);
             continue;
         }
-        printf("Crawling %s\n", url);
         char *data = crawl(url);
         struct webpage webpage = create_webpage(url, strlen(url), data, strlen(data));
         printf("Writing %s\n", webpage.url);
@@ -33,19 +33,22 @@ void init_db(char *url)
         printf("Length of webpage: %ld\n", strlen(data));
 
         // Print the content of the webpage
-        char* content = (char *)read_webpage(url, strlen(webpage.url));
+        char *content = (char *)read_webpage(url, strlen(webpage.url));
         printf("Content of webpage: %s\n", content);
 
-	struct list *url_list = parser(data, url);
-	struct list *current = url_list->next;
-	while(current != NULL)
-	{
-		printf("%s\n", (char *)current->data);
-		current = current->next;
-	}
 
-        free(content);
-	free(url);
+        return;
+
+        struct list *url_list = parser(data, url);
+        struct list *current = url_list->next;
+        while (current != NULL)
+        {
+            printf("%s\n", (char *)current->data);
+            current = current->next;
+        }
+
+        //free(content);
+        free(url);
         free(data);
         free(webpage.url);
         free(webpage.content->data);
@@ -58,7 +61,8 @@ void init_db(char *url)
 void tests()
 {
 
-    char *url1 = string_to_heap("https://baseball-reference.com//", 31);
+    char *url1 = string_to_heap("http://en.citizendium.org/wiki/Welcome_to_Citizendium");
+    printf("url1: %s\n", url1);
 
     init_db(url1);
 }
