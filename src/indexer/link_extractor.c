@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../structures/lists/linked-list/list.h"
+#include "link_extractor.h"
 
 char htag[9] = "a href=\"";
 
@@ -11,13 +11,16 @@ char *build_link(char *link, char *domain)
 	strcpy(res, "http");
 	strcat(res, domain);
 	strcat(res, link);
-	printf("new link = %s\n", res);
+	printf("%s\n", res);
 	return res;
 }
 
 int check_domain(char **link, char *domain)
 {
-	if((*link)[0] == '/')
+	if(strlen(*link) < 3)
+		return 0;
+	
+	if((*link)[0] == '/' || ((*link)[0] == '.' && (*link)[1] == '/'))
 	{ 
 		
 		return 2;
@@ -56,7 +59,7 @@ int check_domain(char **link, char *domain)
 	return 0;
 }
 
-int add_link(char *file, int *i, struct list *links, char *domain, int len)
+int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 {
 	int pos = 0;
 	char *link = malloc(sizeof(char)*256);
@@ -83,19 +86,20 @@ int add_link(char *file, int *i, struct list *links, char *domain, int len)
 	if(pos < 256)
 	{
 		link = realloc(link, pos);
-		printf("found link: %s\n", link);
+		//printf("found link: %s\n", link);
 		state = check_domain(&link, domain);
 		if(state)
 		{
 			if(state == 2)
 			{
 				
-				add_top(links, new_element(build_link(link, domain)));
+				addstack((*links), build_link(link, domain));
 				free(link);
 			}
 			else
 			{
-				add_top(links, new_element(link));
+				printf("%s\n", link);
+				addstack((*links), link);
 			}
 			return 1;
 		}
@@ -164,16 +168,14 @@ int check_tag(char *file, int *i, char *tag, size_t tag_len, int len)
 	return (j == tag_len);
 }
 
-struct list* bparser(char* file, char* link, int len)
+void bparser(struct stack** url_list, char* file, char* link, int len)
 {
 	char *domain = get_domain(link);
-
-	struct list *links = new_list();
 
 	if(domain == NULL)
 	{
 		printf("could not retrieve domain name, the link list returned is empty\n");
-		return links;
+		return;
 	}
 
 	int *i = calloc(sizeof(int), 1);
@@ -187,7 +189,7 @@ struct list* bparser(char* file, char* link, int len)
 
 			if(*i >= len)
 			{
-				return links;
+				return;
 			}
 
 			switch(file[*i])
@@ -195,7 +197,7 @@ struct list* bparser(char* file, char* link, int len)
 				case 'a':
 					if(check_tag(file, i, htag, 8, len))
 					{
-						add_link(file, i, links, domain, len);
+						add_link(file, i, url_list, domain, len);
 					}
 					break;
 			}
@@ -220,5 +222,5 @@ struct list* bparser(char* file, char* link, int len)
 	free(current);
 	*/
 
-	return links->next;
+	return;
 }
