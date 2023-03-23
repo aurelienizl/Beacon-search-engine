@@ -1,102 +1,136 @@
+#define _GNU_SOURCE
 #include "crawler.h"
 
-size_t HandleCallback(void *contents, size_t size, size_t nmemb, void *userdata)
+void rewrite(int fd, const void *buf, size_t count)
 {
-
-  // Calculate total size
-  size_t total_size = size * nmemb;
-
-  // Cast userdata to Memory
-  Memory *content = (Memory *)userdata;
-
-  // Reallocate memory
-  content->data = realloc(content->data, content->size + total_size + 1);
-
-  // Check if realloc() failed
-  if (content->data == NULL)
-  {
-    printf("Error: realloc() failed\n");
-    return 0;
-  }
-
-  // Clear memory using explicit_bzero()
-  explicit_bzero(&(content->data[content->size]), total_size + 1);
-
-  // Copy contents to data
-  memcpy(&(content->data[content->size]), contents, total_size);
-
-  // Set last byte to 0
-  content->size += total_size;
-  content->data[content->size] = 0;
-
-  return total_size;
+	ssize_t res;
+	int acc = 0;
+	do
+	{
+		res = write(fd, (char *)buf + acc, count);
+		if (res == -1)
+		{
+			errx(1, "write");
+		}
+		acc += res;
+		count -= res;
+	} while (count > 0);
 }
 
-int GetPage(const char *url, const char *user_agent, Memory *content)
+char *get_request(const char *domain, const char *path, size_t *len)
 {
-
-  CURL *request;
-  CURLcode res;
-
-  // Current user agent
-  char current_user_agent[USER_AGENT_MAX_SIZE];
-
-  // Check if url is valid
-  if (url == NULL || strlen(url) == 0)
-  {
-    return -1;
-  }
-
-  // Set current user agent to 0
-  explicit_bzero((char *)&current_user_agent, USER_AGENT_MAX_SIZE);
-
-  // Check if user agent is valid
-  if (user_agent == NULL)
-  {
-    strcpy(current_user_agent, DEFAULT_UAGENT);
-  }
-  else
-  {
-    if (strlen(user_agent) >= USER_AGENT_MAX_SIZE)
-    {
-      return -1;
-    }
-    strcpy(current_user_agent, user_agent);
-  }
-
-  curl_global_init(CURL_GLOBAL_ALL);
-
-  // Initialize request
-  request = curl_easy_init();
-
-  curl_easy_setopt(request, CURLOPT_URL, url);
-  curl_easy_setopt(request, CURLOPT_WRITEFUNCTION, HandleCallback);
-  curl_easy_setopt(request, CURLOPT_WRITEDATA, (void *)content);
-  curl_easy_setopt(request, CURLOPT_USERAGENT, current_user_agent);
-
-  // Perform request
-  res = curl_easy_perform(request);
-
-  // Check if request failed
-  if (res != CURLE_OK)
-  {
-    return -1;
-  }
-
-  // Cleanup
-  curl_easy_cleanup(request);
-  curl_global_cleanup();
-
-  return 0;
+	char *request;
+	int res = asprintf(&request, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", path, domain);
+	if (res == -1)
+	{
+		errx(1, "asprintf error");
+	}
+	*len = res;
+	return request;
 }
 
-char* crawl(char* url)
+char *get_content(const char *domain, const char *path)
 {
-  Memory content;
-  content.data = malloc(1);
-  content.size = 0;
+	// Create the 'hints' structure.
+	struct addrinfo hints;
 
-  GetPage(url, NULL, &content);
+	// Initialize all the fields to zero.
+	memset(&hints, 0, sizeof(hints));
 
-  return content.data;
+	// Specify the criteria of the hint structure
+	hints.ai_family = AF_INET;		 // IPv4
+	hints.ai_socktype = SOCK_STREAM; // TCP
+
+	// Pointer to store the results
+	struct addrinfo *result;
+
+	// Get the linked list and the return value
+	int err = getaddrinfo(domain, "80", &hints, &result);
+
+	// Check if getaddrinfo performed
+	if (err != 0)
+	{
+		errx(1, "getaddrinfo error");
+	}
+
+	// File descriptor for the socket
+	int sfd;
+
+	// Pointer used to iterate over the linked list
+	struct addrinfo *p;
+
+	for (p = result; p != NULL; p = p->ai_next)
+	{
+		// Try to create a socket
+		sfd = socket(p->ai_family,
+					 p->ai_socktype,
+					 p->ai_protocol);
+
+		// If an error occured, continue with the next operation
+		if (sfd == -1)
+		{
+			continue;
+		}
+
+		// Try to connect the socket
+		err = connect(sfd, p->ai_addr, p->ai_addrlen);
+
+		// If successful, break the loop (p != 0)
+		// If error, close the socket
+		if (err != -1)
+		{
+			break;
+		}
+		else
+		{
+			close(sfd);
+		}
+	}
+
+	if (p == NULL)
+	{
+		errx(EXIT_FAILURE, "Couldn't connect");
+	}
+
+	size_t len = strlen(domain);
+	char *query = get_request(domain, path, &len);
+
+	rewrite(sfd, query, len);
+
+	/*
+	char tmp[BUFFER_SIZE];
+
+	ssize_t a;
+
+	char *buffer = calloc(BUFFER_SIZE, 1);
+	while((a = read(sfd, tmp, BUFFER_SIZE)) > 0)
+	{
+		strcat(buffer, tmp);
+		memset(tmp, 0, BUFFER_SIZE);
+	}
+*/
+	ssize_t a;
+	char tmp[BUFFER_SIZE];
+	char *buffer = calloc(1, sizeof(int));
+	do
+	{
+
+		memset(tmp, 0, BUFFER_SIZE);
+		a = read(sfd, tmp, BUFFER_SIZE);
+		if (a == -1)
+		{
+			errx(1, "read");
+		}
+		buffer = realloc(buffer, strlen(buffer) + a + 1);
+		memcpy(buffer + strlen(buffer), tmp, a);
+	} while (a > 0);
+
+
+	
+	close(sfd);
+	free(query);
+	freeaddrinfo(result);
+
+	return buffer;
 }
+
