@@ -52,4 +52,8 @@ void on_inputSearch_activate(GtkWidget *widget, gpointer *userdata);
 
 void open_db();
 
+// Contains all methods used by the search engine.
+
+void display_new_form(char* text);
+
 #endif  

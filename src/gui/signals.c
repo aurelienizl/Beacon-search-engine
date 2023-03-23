@@ -21,6 +21,7 @@ void on_buttonReload_activate(GtkWidget *widget, gpointer *userdata)
 void on_buttonExit_activate(GtkWidget *widget, gpointer *userdata)
 {
     g_print("Button Exit clicked !\n");
+    gtk_main_quit();
 }
 
 void on_buttonOpenDB_activate(GtkWidget *widget, gpointer *userdata)
@@ -73,6 +74,7 @@ void on_inputSearch_activate(GtkWidget *widget, gpointer *userdata)
 {
     g_print("You hit enter !\n");
     printf("You have typed : %s\n", gtk_entry_get_text((GtkEntry*)widget));
+    display_new_form(gtk_entry_get_text((GtkEntry*)widget));
 }
 
 
