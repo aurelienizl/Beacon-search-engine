@@ -2,10 +2,9 @@
 
 # Compiler settings
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -D_DEFAULT_SOURCE -g
+CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g
 
 # Library paths
-CURL_LIB := -lcurl
 ZLIB_LIB := -lz
 OPENSSL_LIB := -lcrypto
 
