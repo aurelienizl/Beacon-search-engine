@@ -63,6 +63,7 @@ void write_webpage(struct webpage *webpage)
     free(path_full);
     free(path);
     free(file_name);
+    
 }
 
 void normalize_html(char *html, size_t *html_size)
@@ -114,7 +115,7 @@ unsigned char *read_webpage(char *url, size_t url_size)
     struct data *data = (struct data *)malloc(sizeof(struct data));
     data->data = buffer;
     data->data_size = file_size;
-    data->data_capacity = 256000;
+    data->data_capacity = 500000;
 
     decompress_data(data);
 
