@@ -30,21 +30,27 @@ char *get_domain_ext(char *str)
     return domain;
 }
 
+void safe_delete(char *str)
+{
+    if (str != NULL)
+        free(str);
+}
+
 void init_crawler(char* url)
 {
 	struct stack *stack = new_stack();
     addstack(stack, url);
     char* domain = get_domain_ext(url);
 
-
     while(!is_empty_stack(stack))
     {
-        printf("0 : Unstacking url\n\n\n");
+        printf("0 : Unstacking url\n");
         char* current_url = unstack(stack);
         printf("1 : New url is : %s \n", current_url);
         if(exist_webpage(current_url))
         {
-            printf("Webpage already exist !\n");
+            safe_delete(current_url);
+            printf("W : Webpage already exist !\n\n");
             continue;
         }
         printf("2 : Processing: %s\n", current_url);
@@ -52,7 +58,8 @@ void init_crawler(char* url)
         printf("3 : Page crawled ! \n");
         if(content == NULL)
         {
-            printf("Error while crawling page !\n");
+            safe_delete(current_url);
+            printf("E : Error while crawling page !\n\n");
             continue;
         }
         printf("3 : Adding page to database\n");
@@ -60,20 +67,18 @@ void init_crawler(char* url)
         printf("4 : Page added ! Parsing webpage...\n");
         bparser(&stack, content, current_url, strlen(content));
         printf("5 : Webpage parsed, stack updated !\n");
-        free(current_url);
-        printf("6 : Content freed !\n");
-
+        safe_delete(content);
+        safe_delete(current_url);
+        printf("6 : Content freed !\n\n");
     }
-    free(domain);
-    freestack(stack);
-
+    printf("N : Stack is empty !\n");
 }
 
 int main()
 {
     
     // test crawler
-    char* url = string_to_heap("http://en.citizendium.org/wiki/index.php?title=Main_Page");
+    char* url = string_to_heap("http://www.scholarpedia.org/article/Main_Page");
     init_crawler(url);
 
     return 0;
