@@ -8,7 +8,7 @@
 #include "database/store_server.h"
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
-//#include "indexer/indexer.h"
+// #include "indexer/indexer.h"
 #include "indexer/link_extractor.h"
 
 char *get_domain_ext(char *str)
@@ -33,39 +33,59 @@ char *get_domain_ext(char *str)
 void new_test()
 {
     // Get the url
-    char *url = string_to_heap("http://en.citizendium.org/");
+    char *url = string_to_heap("http://monumentslitteraires.com/about-litep-literature-in-the-public-space");
 
     // TODO: get the domain name
     char *domain = get_domain_ext(url);
 
     // Create the stack
     struct stack *stack = new_stack();
-    // Add the url to the stack
-    addstack(stack, url);
-   
-    // While the stack is not empty
-    while(!is_empty_stack(stack))
-    {
-        char *url = unstack(stack);
-        // Check if the url is already in the database
-        if(read_webpage(url, strlen(url)) != NULL)
-        {
-            continue;
-        }
-        // Get the content of the url
-        char* content = get_content(domain, url);
-        if(content == NULL)
-        {
-            continue;
-        }
-        // Store the content in the database
-        struct webpage page = create_webpage(url, strlen(url), content, strlen(content));
-        write_webpage(&page);
 
-        // TODO: get the links
-	printf("%s\n\n\n\n", content);
-	bparser(&stack, content, url, strlen(content));
+    // Get the content of the url
+    char *content = get_content(domain, url);
+
+    printf("%s\n", content);
+
+    bparser(&stack, content, url, strlen(content));
+
+    // Free the url
+    free(content);
+
+    // While the stack is not empty
+    while (!is_empty_stack(stack))
+    {
+
+        char *uurl = unstack(stack);
+        char *ccontent = get_content(domain, uurl);
+        printf("%s\n", uurl);
+
+        if (ccontent == NULL)
+        {
+            continue;
+        }
+
+        // print first line of content
+        char *line = strtok(ccontent, "\n");
+        printf("%s\n", line);
+
+        // Free the url
+        free(ccontent);
+
+        // Free the url
+        free(uurl);
+
+        // Free the url
+        free(line);
     }
+
+    // Free the stack
+    freestack(stack);
+
+    // Free the url
+    free(url);
+
+    // Free the domain
+    free(domain);
 }
 
 int main()

@@ -50,7 +50,8 @@ char *get_content(const char *domain, const char *path)
 	// Check if getaddrinfo performed
 	if (err != 0)
 	{
-		errx(1, "getaddrinfo error");
+		printf("Error, cannot get the address info");
+		return NULL;
 	}
 
 	// File descriptor for the socket
@@ -89,8 +90,11 @@ char *get_content(const char *domain, const char *path)
 
 	if (p == NULL)
 	{
-		errx(EXIT_FAILURE, "Couldn't connect");
+		printf("Error, cannot connect to the socket");
+		return NULL;
 	}
+
+	freeaddrinfo(result);
 
 	size_t len = strlen(domain);
 	char *query = get_request(domain, path, &len);
@@ -119,7 +123,9 @@ char *get_content(const char *domain, const char *path)
 		a = read(sfd, tmp, BUFFER_SIZE);
 		if (a == -1)
 		{
-			errx(1, "read");
+			printf("Error reading from socket");
+			free(buffer);
+			return NULL;
 		}
 		buffer = realloc(buffer, strlen(buffer) + a + 1);
 		memcpy(buffer + strlen(buffer), tmp, a);
@@ -129,7 +135,6 @@ char *get_content(const char *domain, const char *path)
 	
 	close(sfd);
 	free(query);
-	freeaddrinfo(result);
 
 	return buffer;
 }
