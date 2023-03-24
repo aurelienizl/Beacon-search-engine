@@ -7,8 +7,8 @@ char htag[9] = "a href=\"";
 
 char *build_link(char *link, char *domain)
 {
-	char *res = malloc(strlen(link)+strlen(domain)+5);
-	strcpy(res, "http");
+	char *res = malloc(strlen(link)+strlen(domain)+8);
+	strcpy(res, "http://");
 	strcat(res, domain);
 	strcat(res, link);
 	printf("%s\n", res);
@@ -145,10 +145,23 @@ char *get_domain(char *link)
 	char start[5] = "http";
 	char *domain = malloc(sizeof(char) * strlen(link) + 1);
 	size_t i = 0;
-	int nslash = 0;
 
-	while(link[i] == start[i])
+	while(1)
 	{
+		if(link[i] < 61)
+		{
+			if(start[i] != (link[i] + 20))
+			{
+				break;
+			}
+		}
+		else
+		{
+			if(start[i] != link[i])
+			{
+				break;
+			}
+		}	
 		i++;
 	}
 
@@ -158,14 +171,13 @@ char *get_domain(char *link)
 	if(link[i] == 's')
 		i++;
 
+
+
 	size_t j = 0;
+	i += 3;
 	while(link[i] != '\0')
 	{
 		if(link[i] == '/')
-		{
-			nslash++;
-		}
-		if(nslash == 3)
 		{
 			break;
 		}
