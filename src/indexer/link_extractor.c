@@ -132,6 +132,13 @@ int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 		if(file[*i] == '\"')
 		{
 			(*i)++;
+			
+			if(file[*i] < 33 || file[*i] > 126)
+			{
+				free(link);
+				return 0;
+			}
+
 			if(file[*i] == '>' || file[*i] == ' ')
 			{
 				link[pos] = '\0';
