@@ -7,11 +7,11 @@ char htag[9] = "a href=\"";
 
 char *build_link(char *link, char *domain)
 {
-	char *res = malloc(strlen(link)+strlen(domain)+8);
+	char *res = calloc(sizeof(char), strlen(link)+strlen(domain)+8);
 	strcpy(res, "http://");
 	strcat(res, domain);
 	strcat(res, link);
-	printf("%s\n", res);
+	//printf("%s\n", res);
 	return res;
 }
 
@@ -30,13 +30,27 @@ int check_suffix(char *link)
 		}
 	}
 
-	while(i >= 0 && link[i] != '/')
+
+	int countdot = 0;
+	int j = 0;
+	
+	if(link[j] != '/' || link[j] == '.')
 	{
-		if(link[i] == '.')
+		countdot = countdot - 2;
+	}
+	
+	
+	while(j < i)
+	{
+		if(link[j] == '.')
+		{
+			countdot++;
+		}
+		if(countdot == 1)
 		{
 		       return 0;
-		}	       
-		i--;
+		}		
+		j++;
 	}
 
 	return 1;
@@ -81,7 +95,7 @@ int check_domain(char **link, char *domain)
 
 	if((*link)[i] == '\0' || domain[j] == '\0')
 	{
-		return 1;
+		return check_suffix(*link);
 	}
 
 	return 0;
@@ -90,11 +104,17 @@ int check_domain(char **link, char *domain)
 int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 {
 	int pos = 0;
-	char *link = malloc(sizeof(char)*256);
+	char *link = calloc(sizeof(char), 256);
 	int state;
 
 	while(*i < len && pos < 256)
 	{
+		if(file[*i] < 33 || file[*i] > 126)
+		{
+			free(link);
+			return 0;
+		}
+
 		if(file[*i] == '\"')
 		{
 			(*i)++;
@@ -133,17 +153,19 @@ int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 		}
 		else
 		{
+			free(link);
 			return 0;
 		}
 	}
 
+	free(link);
 	return 0;
 }
 
 char *get_domain(char *link)
 {
 	char start[5] = "http";
-	char *domain = malloc(sizeof(char) * strlen(link) + 1);
+	char *domain = calloc(sizeof(char), strlen(link) + 1);
 	size_t i = 0;
 
 	while(1)
