@@ -238,10 +238,18 @@ int check_tag(char *file, int *i, char *tag, size_t tag_len, int len)
 {
 	size_t j = 1; 
 	(*i)++;
+	char c;
 
 	while(*i < len && j < tag_len)
 	{
-		if(file[*i] != tag[j])
+		c = file[*i];
+		if(c != 32 && c != 61 && c != 34 && c < 97)
+		{
+			printf("problematic character = %c\n, %d", c, (int)c);
+			if(c + 32 != tag[j])
+				break;
+		}
+		if(c != tag[j])
 			break;
 		j++;
 		(*i)++;
