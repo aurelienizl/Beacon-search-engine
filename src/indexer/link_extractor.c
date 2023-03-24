@@ -71,8 +71,22 @@ int check_domain(char **link, char *domain)
 	char start[5] = "http";
 	size_t i = 0;
 	
-	while((*link)[i] == start[i])
+	while(i < 4)
 	{
+		if((*link)[i] < 97)
+		{
+			if(start[i] != ((*link)[i] + 32))
+			{
+				break;
+			}
+		}
+		else
+		{
+			if(start[i] != (*link)[i])
+			{
+				break;
+			}
+		}	
 		i++;
 	}
 
@@ -168,11 +182,11 @@ char *get_domain(char *link)
 	char *domain = calloc(sizeof(char), strlen(link) + 1);
 	size_t i = 0;
 
-	while(1)
+	while(i < 4)
 	{
-		if(link[i] < 61)
+		if(link[i] < 97)
 		{
-			if(start[i] != (link[i] + 20))
+			if(start[i] != (link[i] + 32))
 			{
 				break;
 			}
