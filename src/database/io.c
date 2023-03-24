@@ -26,7 +26,6 @@ void create_directory(char *url)
     char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
     char *path = string_concat(db_directory, folder_name);
 
-    printf("Folder name : %s\n", path);
     rek_mkdir(path);
 
     free(folder_name);

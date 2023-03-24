@@ -1,7 +1,6 @@
 #define _GNU_SOURCE
 #include "crawler.h"
 
-
 void rewrite(int fd, const void *buf, size_t count)
 {
 	ssize_t res;
@@ -29,6 +28,40 @@ char *get_request(const char *domain, const char *path, size_t *len)
 	*len = res;
 	return request;
 }
+
+char *receive_query(int socket_fd)
+{
+	int bytesum = 0;
+	int current_received;
+	int Size = (BUFFER_SIZE) * sizeof(char);
+	char *byte_received = (char *)malloc(Size);
+	byte_received[0] = '\0';
+	char *buffer = (char *)malloc(BUFFER_SIZE * sizeof(char));
+	memset(buffer, 0, BUFFER_SIZE);
+	while ((current_received = recv(socket_fd, buffer, BUFFER_SIZE, 0)) > 0)
+	{
+		// If received any bytes current_received will not equal to 0
+		bytesum += current_received;
+		if (bytesum >= Size)
+		{
+			Size = Size * 2; // Extend twice size
+			byte_received = realloc(byte_received, Size);
+			if (byte_received == NULL)
+			{
+				perror(" |ERROR| Error receiving data");
+				return NULL;
+			}
+		}
+		strncat(byte_received, buffer, current_received);
+		memset(buffer, 0, current_received);
+	}
+	if (current_received < 0)
+	{
+		perror(" |ERROR| Error receiving data");
+		return NULL;
+	}
+	return byte_received;
+} 
 
 char *get_content(const char *domain, const char *path)
 {
@@ -102,6 +135,8 @@ char *get_content(const char *domain, const char *path)
 
 	rewrite(sfd, query, len);
 
+	free(query);
+
 	/*
 	char tmp[BUFFER_SIZE];
 
@@ -114,8 +149,7 @@ char *get_content(const char *domain, const char *path)
 		memset(tmp, 0, BUFFER_SIZE);
 	}
 */
-
-	
+	/*
 	ssize_t a;
 	char tmp[BUFFER_SIZE];
 	char *buffer = calloc(1, sizeof(int));
@@ -138,10 +172,11 @@ char *get_content(const char *domain, const char *path)
 		}
 		memcpy(buffer + strlen(buffer), tmp, a);
 	} while (a > 0);
+	*/
+
+	char *buffer = receive_query(sfd);
 
 	close(sfd);
-	free(query);
 
 	return buffer;
 }
-

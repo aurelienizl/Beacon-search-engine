@@ -8,7 +8,7 @@
 
 struct stack *new_stack()
 {
-    struct stack *stack = malloc(sizeof(struct stack));
+    struct stack *stack = calloc(1, sizeof(struct stack));
     stack->last = NULL;
     return stack;
 }
@@ -18,7 +18,7 @@ void addstack(struct stack *stack, void* data)
     struct list *top = stack->last;
     if(top == NULL)
     {
-        top = malloc(sizeof(struct list));
+        top = calloc(1, sizeof(struct list));
         top->data = data;
         top->next = NULL;
         top->prev = NULL;
@@ -26,7 +26,7 @@ void addstack(struct stack *stack, void* data)
     }
     else
     {
-        struct list *new = malloc(sizeof(struct list));
+        struct list *new = calloc(1, sizeof(struct list));
         new->data = data;
         new->prev = top;
         new->next = NULL;
@@ -45,7 +45,7 @@ void* unstack(struct stack *stack)
     {
         void *data = last->data;
         size_t size = strlen(data);
-        char *new_space = malloc(sizeof(char) * (size + 1));
+        char *new_space = calloc(1, sizeof(char) * (size + 1));
         strncpy(new_space, data, size);
         new_space[size] = '\0';
         stack->last = stack->last->prev;

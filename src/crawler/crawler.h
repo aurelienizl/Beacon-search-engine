@@ -12,6 +12,6 @@
 #include <err.h>
 #include <pthread.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 8192
 
 char *get_content(const char *domain, const char *path);
