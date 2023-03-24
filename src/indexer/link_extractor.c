@@ -44,7 +44,7 @@ int check_suffix(char *link)
 
 int check_domain(char **link, char *domain)
 {
-	if(strlen(*link) < 3)
+	if(strlen(*link) < 3 || strstr((*link), "\n"))
 		return 0;
 	
 	if((*link)[0] == '/' || ((*link)[0] == '.' && (*link)[1] == '/'))
