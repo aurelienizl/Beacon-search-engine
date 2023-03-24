@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <err.h>
+#include <pthread.h>
 
 #define BUFFER_SIZE 1024
 

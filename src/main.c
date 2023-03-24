@@ -8,7 +8,7 @@
 #include "database/store_server.h"
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
-// #include "indexer/indexer.h"
+//#include "indexer/indexer.h"
 #include "indexer/link_extractor.h"
 
 char *get_domain_ext(char *str)
@@ -30,68 +30,51 @@ char *get_domain_ext(char *str)
     return domain;
 }
 
-void new_test()
+void init_crawler(char* url)
 {
-    // Get the url
-    char *url = string_to_heap("http://monumentslitteraires.com/about-litep-literature-in-the-public-space");
+	struct stack *stack = new_stack();
+    addstack(stack, url);
+    char* domain = get_domain_ext(url);
 
-    // TODO: get the domain name
-    char *domain = get_domain_ext(url);
 
-    // Create the stack
-    struct stack *stack = new_stack();
-
-    // Get the content of the url
-    char *content = get_content(domain, url);
-
-    printf("%s\n", content);
-
-    bparser(&stack, content, url, strlen(content));
-
-    // Free the url
-    free(content);
-
-    // While the stack is not empty
-    while (!is_empty_stack(stack))
+    while(!is_empty_stack(stack))
     {
-
-        char *uurl = unstack(stack);
-        char *ccontent = get_content(domain, uurl);
-        printf("%s\n", uurl);
-
-        if (ccontent == NULL)
+        printf("0 : Unstacking url\n\n\n");
+        char* current_url = unstack(stack);
+        printf("1 : New url is : %s \n", current_url);
+        if(exist_webpage(current_url))
         {
+            printf("Webpage already exist !\n");
             continue;
         }
+        printf("2 : Processing: %s\n", current_url);
+        char* content = get_content(domain, current_url);
+        printf("3 : Page crawled ! \n");
+        if(content == NULL)
+        {
+            printf("Error while crawling page !\n");
+            continue;
+        }
+        printf("3 : Adding page to database\n");
+        write_to_file(content, current_url);
+        printf("4 : Page added ! Parsing webpage...\n");
+        bparser(&stack, content, current_url, strlen(content));
+        printf("5 : Webpage parsed, stack updated !\n");
+        free(current_url);
+        printf("6 : Content freed !\n");
 
-        // print first line of content
-        char *line = strtok(ccontent, "\n");
-        printf("%s\n", line);
-
-        // Free the url
-        free(ccontent);
-
-        // Free the url
-        free(uurl);
-
-        // Free the url
-        free(line);
     }
-
-    // Free the stack
+    free(domain);
     freestack(stack);
 
-    // Free the url
-    free(url);
-
-    // Free the domain
-    free(domain);
 }
 
 int main()
 {
+    
     // test crawler
-    new_test();
+    char* url = string_to_heap("http://en.citizendium.org/wiki/index.php?title=Main_Page");
+    init_crawler(url);
 
     return 0;
 }

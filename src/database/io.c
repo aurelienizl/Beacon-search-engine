@@ -7,6 +7,55 @@
 ** @note          The returned string must be freed, memory leaks safe.
 */
 
+void rek_mkdir(char *path)
+{
+    char *sep = strrchr(path, '/');
+    if (sep != NULL)
+    {
+        *sep = 0;
+        rek_mkdir(path);
+        *sep = '/';
+    }
+    if (mkdir(path, 0777) && errno != EEXIST)
+        printf("error while trying to create '%s'\n%m\n", path);
+}
+
+void create_directory(char *url)
+{
+    char *db_directory = string_to_heap("db/");
+    char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *path = string_concat(db_directory, folder_name);
+
+    printf("Folder name : %s\n", path);
+    rek_mkdir(path);
+
+    free(folder_name);
+    free(path);
+    
+}
+
+int write_to_file(char* data, char* url)
+{
+    char *db_directory = string_to_heap("db/");
+    char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *path = string_concat(db_directory, folder_name);
+    char *filename = string_concat(path, "/index.html");
+
+    create_directory(url);
+    
+    FILE *fp = fopen(filename, "w");
+    if (fp == NULL)
+    {
+        printf("Failed to open file %s\n", filename);
+        return 0;
+    }
+
+    fprintf(fp, "%s", data);
+    fclose(fp);
+
+    return 1;
+}
+
 char *io_get_file(char *path)
 {
     DIR *dir = opendir(path);
@@ -33,6 +82,7 @@ char *io_get_file(char *path)
     char* new_path = string_concat(full_path, entry->d_name);
 
     free(full_path);
+
 
     return new_path;
 }
