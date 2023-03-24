@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include "crawler.h"
 
+
 void rewrite(int fd, const void *buf, size_t count)
 {
 	ssize_t res;
@@ -113,6 +114,8 @@ char *get_content(const char *domain, const char *path)
 		memset(tmp, 0, BUFFER_SIZE);
 	}
 */
+
+	
 	ssize_t a;
 	char tmp[BUFFER_SIZE];
 	char *buffer = calloc(1, sizeof(int));
@@ -128,11 +131,14 @@ char *get_content(const char *domain, const char *path)
 			return NULL;
 		}
 		buffer = realloc(buffer, strlen(buffer) + a + 1);
+		if (buffer == NULL)
+		{
+			printf("Error reallocating memory");
+			return NULL;
+		}
 		memcpy(buffer + strlen(buffer), tmp, a);
 	} while (a > 0);
 
-
-	
 	close(sfd);
 	free(query);
 

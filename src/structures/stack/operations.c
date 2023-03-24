@@ -20,7 +20,6 @@ void addstack(struct stack *stack, void* data)
     {
         top = malloc(sizeof(struct list));
         top->data = data;
-        top->data = data;
         top->next = NULL;
         top->prev = NULL;
         stack->last = top;
@@ -28,7 +27,6 @@ void addstack(struct stack *stack, void* data)
     else
     {
         struct list *new = malloc(sizeof(struct list));
-        new->data = data;
         new->data = data;
         new->prev = top;
         new->next = NULL;
