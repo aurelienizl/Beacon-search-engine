@@ -15,6 +15,33 @@ char *build_link(char *link, char *domain)
 	return res;
 }
 
+int check_suffix(char *link)
+{	
+	int i = strlen(link) - 1;
+
+	if(i > 3)
+	{
+		if (link[i] == 'l' && link[i - 1] == 'm' &&
+				link[i - 2] == 't' &&
+				link[i - 3] == 'h' &&
+				link[i - 4] == '.' )
+		{
+			return 1;
+		}
+	}
+
+	while(i >= 0 && link[i] != '/')
+	{
+		if(link[i] == '.')
+		{
+		       return 0;
+		}	       
+		i--;
+	}
+
+	return 1;
+}
+
 int check_domain(char **link, char *domain)
 {
 	if(strlen(*link) < 3)
@@ -22,8 +49,9 @@ int check_domain(char **link, char *domain)
 	
 	if((*link)[0] == '/' || ((*link)[0] == '.' && (*link)[1] == '/'))
 	{ 
-		
-		return 2;
+		if(check_suffix(*link))
+			return 2;
+		return 0;
 	}
 
 	char start[5] = "http";

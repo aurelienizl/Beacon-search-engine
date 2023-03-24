@@ -63,6 +63,8 @@ void new_test()
         write_webpage(&page);
 
         // TODO: get the links
+	printf("%s\n\n\n\n", content);
+	bparser(&stack, content, url, strlen(content));
     }
 }
 

@@ -3,6 +3,7 @@
 
 #include "../structures/stack/stack.h"
 
+int check_suffix(char *link);
 int check_domain(char **link, char *domain);
 int add_link(char *file, int *i, struct stack** links, char *domain, int len);
 char *get_domain(char *link);
