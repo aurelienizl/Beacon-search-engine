@@ -1,3 +1,4 @@
+
 #define _GNU_SOURCE
 #include "crawler.h"
 
@@ -20,7 +21,7 @@ void rewrite(int fd, const void *buf, size_t count)
 char *get_request(const char *domain, const char *path, size_t *len)
 {
 	char *request;
-	int res = asprintf(&request, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n", path, domain);
+	int res = asprintf(&request, "GET %s HTTP/1.1\r\nHost: %s\r\nAccept: text/html\r\nCache-Control: max-age=0\r\nUpgrade-Insecure-Requests: 0\r\nUser-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.75 Safari/537.36 Google Favicon\r\n\r\n", path, domain);
 	if (res == -1)
 	{
 		errx(1, "asprintf error");
@@ -61,7 +62,7 @@ char *receive_query(int socket_fd)
 		return NULL;
 	}
 	return byte_received;
-} 
+}
 
 char *get_content(const char *domain, const char *path)
 {
@@ -148,31 +149,31 @@ char *get_content(const char *domain, const char *path)
 		strcat(buffer, tmp);
 		memset(tmp, 0, BUFFER_SIZE);
 	}
-*/
-	/*
-	ssize_t a;
-	char tmp[BUFFER_SIZE];
-	char *buffer = calloc(1, sizeof(int));
-	do
-	{
 
-		memset(tmp, 0, BUFFER_SIZE);
-		a = read(sfd, tmp, BUFFER_SIZE);
-		if (a == -1)
-		{
-			printf("Error reading from socket");
-			free(buffer);
-			return NULL;
-		}
-		buffer = realloc(buffer, strlen(buffer) + a + 1);
-		if (buffer == NULL)
-		{
-			printf("Error reallocating memory");
-			return NULL;
-		}
-		memcpy(buffer + strlen(buffer), tmp, a);
-	} while (a > 0);
-	*/
+
+ssize_t a;
+char tmp[BUFFER_SIZE];
+char *buffer = calloc(1, sizeof(int));
+do
+{
+
+	memset(tmp, 0, BUFFER_SIZE);
+	a = read(sfd, tmp, BUFFER_SIZE);
+	if (a == -1)
+	{
+		printf("Error reading from socket");
+		free(buffer);
+		return NULL;
+	}
+	buffer = realloc(buffer, strlen(buffer) + a + 1);
+	if (buffer == NULL)
+	{
+		printf("Error reallocating memory");
+		return NULL;
+	}
+	memcpy(buffer + strlen(buffer), tmp, a);
+} while (a > 0);
+*/
 
 	char *buffer = receive_query(sfd);
 
@@ -180,3 +181,6 @@ char *get_content(const char *domain, const char *path)
 
 	return buffer;
 }
+
+
+

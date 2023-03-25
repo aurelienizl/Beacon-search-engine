@@ -5,7 +5,7 @@ CC := gcc
 CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g
 
 # Library paths
-ZLIB_LIB := -lz
+ZLIB_LIB := -lz -lcurl
 OPENSSL_LIB := -lcrypto
 
 # Source files

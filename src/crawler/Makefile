@@ -1,17 +1,30 @@
-CC = gcc
-CFLAGS = -Wall -g
-LIBS = -lcurl
-SRCS = main.c crawler.c
-OBJS = $(SRCS:.c=.o)
-TARGET = crawler
+# Makefile
 
-all: $(TARGET)
+# Compiler settings
+CC := gcc
+CFLAGS := -Wall -Wextra -std=c11 -D_DEFAULT_SOURCE -g  -std=c99 -I/usr/include/libxml2
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBS)
+# Library paths
+CURL_LIB := -lcurl
+ZLIB_LIB := -lz
+OPENSSL_LIB := -lcrypto
 
-.c.o:
+
+# Source files
+SRC := crawler2.c
+# Object files
+OBJ := $(SRC:.c=.o)
+
+# Output binary
+BIN := program
+
+all: $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) -o $(BIN)
+
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJ) $(BIN)
