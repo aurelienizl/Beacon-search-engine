@@ -145,7 +145,7 @@ int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 				break;
 			}
 			link[pos] = '\"';
-			pos++;
+			//pos++;
 		}
 		link[pos] = file[*i];
 		pos++;
@@ -154,7 +154,8 @@ int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 
 	if(pos < 256)
 	{
-		link = realloc(link, pos);
+		//printf("before realloc = %s, pos = %d\n", link, pos);
+		link = realloc(link, pos + 1);
 		//printf("found link: %s\n", link);
 		state = check_domain(&link, domain);
 		if(state)
@@ -174,11 +175,13 @@ int add_link(char *file, int *i, struct stack** links, char *domain, int len)
 		}
 		else
 		{
+			//printf("not added\n");
 			free(link);
 			return 0;
 		}
 	}
 
+	//printf("not added\n");
 	free(link);
 	return 0;
 }
