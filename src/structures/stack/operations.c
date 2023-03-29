@@ -36,7 +36,7 @@ void addstack(struct stack *stack, void* data)
 
 void* unstack(struct stack *stack)
 {
-    struct node *last = stack->last;
+    struct list *last = stack->last;
     if (last == NULL)
     {
         return NULL;
