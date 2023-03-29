@@ -13,16 +13,16 @@
 #include <unistd.h>
 
 /**
-** @brief         Linked list structure.
-** @param next    Next list element.
-** @param prev    Prev list element.
+** @brief         Linked node structure.
+** @param next    Next node element.
+** @param prev    Prev node element.
 ** @param data    Represent the data stored in the node.
 */
 
-struct list
+struct node
 {
-    struct list *next;
-    struct list *prev;
+    struct node *next;
+    struct node *prev;
     void* data;
 };
 
@@ -33,7 +33,7 @@ struct list
 
 struct stack
 {
-    struct list *last;
+    struct node *last;
 };
 
 /**

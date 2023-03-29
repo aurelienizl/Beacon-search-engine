@@ -15,10 +15,10 @@ struct stack *new_stack()
 
 void addstack(struct stack *stack, void* data)
 {
-    struct list *top = stack->last;
+    struct node *top = stack->last;
     if(top == NULL)
     {
-        top = calloc(1, sizeof(struct list));
+        top = calloc(1, sizeof(struct node));
         top->data = data;
         top->next = NULL;
         top->prev = NULL;
@@ -26,7 +26,7 @@ void addstack(struct stack *stack, void* data)
     }
     else
     {
-        struct list *new = calloc(1, sizeof(struct list));
+        struct node *new = calloc(1, sizeof(struct node));
         new->data = data;
         new->prev = top;
         new->next = NULL;
@@ -36,7 +36,7 @@ void addstack(struct stack *stack, void* data)
 
 void* unstack(struct stack *stack)
 {
-    struct list *last = stack->last;
+    struct node *last = stack->last;
     if (last == NULL)
     {
         return NULL;
@@ -52,10 +52,10 @@ void* unstack(struct stack *stack)
 
 void freestack(struct stack *stack)
 {
-    struct list *top = stack->last;
+    struct node *top = stack->last;
     while(top != NULL)
     {
-        struct list *tmp = top->prev;
+        struct node *tmp = top->prev;
         free(top->data);
         free(top);
         top = tmp;

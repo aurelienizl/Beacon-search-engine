@@ -34,7 +34,7 @@ char *random_string_gen(size_t length)
 void print_stack(struct stack *stack)
 {
     printf("STACK : \n");
-    struct list *last = stack->last;
+    struct node *last = stack->last;
     while (last != NULL)
     {
         printf("NEW NODE WITH : %s\n", (char*) last->data);
