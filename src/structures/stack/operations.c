@@ -36,22 +36,17 @@ void addstack(struct stack *stack, void* data)
 
 void* unstack(struct stack *stack)
 {
-    struct list *last = stack->last;
-    if(last == NULL)
+    struct node *last = stack->last;
+    if (last == NULL)
     {
         return NULL;
     }
     else
     {
         void *data = last->data;
-        size_t size = strlen(data);
-        char *new_space = calloc(1, sizeof(char) * (size + 1));
-        strncpy(new_space, data, size);
-        new_space[size] = '\0';
         stack->last = stack->last->prev;
-        free(last->data);
         free(last);
-        return new_space;
+        return data;
     }
 }
 
