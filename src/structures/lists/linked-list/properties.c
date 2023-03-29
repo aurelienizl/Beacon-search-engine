@@ -38,7 +38,7 @@ int is_sorted(struct list *list)
 
     while(list->next != NULL)
     {
-        if(list->data > (list->next)->data)
+        if(strcmp(list->data, (list->next)->data) > 0)
         {
             return 0;
         }
@@ -52,7 +52,7 @@ int count(struct list *list)
 {
     if(list == NULL)
     {
-        return -1;
+        return 0;
     }
     return 1 + count(list->next);
 }
