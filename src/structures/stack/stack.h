@@ -78,5 +78,14 @@ void* unstack(struct stack *stack);
 
 void freestack(struct stack *stack);
 
+/**
+ * @brief Count the number of element in a stack.
+ * @param stack 
+ * @return int 
+ */
+
+
+int count_stack(struct stack *stack);
+
 
 #endif

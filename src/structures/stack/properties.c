@@ -14,3 +14,15 @@ int is_empty_stack(struct stack *stack)
     }
     return 0;
 }
+
+int count_stack(struct stack *stack)
+{
+    int count = 0;
+    struct list *current = stack->last;
+    while(current != NULL)
+    {
+        count++;
+        current = current->prev;
+    }
+    return count;
+}
