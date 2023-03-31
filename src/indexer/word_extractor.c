@@ -1,132 +1,143 @@
-word_info_t *extract_words(xmlDocPtr doc) 
-{
-    word_info_t *word_infos = NULL;
-    xmlNodePtr root = xmlDocGetRootElement(doc);
-    if (root == NULL) {
-        fprintf(stderr, "Error getting root element\n");
-        return NULL;
-    }
-    xmlNodePtr cur = root;
-    while (cur != NULL) {
-        if (cur->type == XML_TEXT_NODE && cur->parent != NULL && cur->parent->type == XML_ELEMENT_NODE) {
-            // Extract the words from the text node
-            char *text = (char *)cur->content;
-            char *word = strtok(text, " ,.;:()[]{}<>'\"\n\r\t");
-            while (word != NULL) {
-                // Convert the word to lowercase
-                for (int i = 0; word[i]; i++) {
-                    word[i] = tolower(word[i]);
-                }
-                // Add the word to the word_info linked list
-                word_info_t *wi = find_word_info(word_infos, word);
-                if (wi == NULL) {
-                    wi = (word_info_t *)malloc(sizeof(word_info_t));
-                    wi->word = strdup(word);
-                    wi->count = 1;
-                    wi->num_positions = 1;
-                    wi->positions = (int *)malloc(sizeof(int));
-                    wi->positions[0] = cur->parent->line;
-                    wi->next = word_infos;
-                    word_infos = wi;
-                } else {
-                    wi->count++;
-                    wi->num_positions++;
-                    wi->positions = (int *)realloc(wi->positions, wi->num_positions * sizeof(int));
-                    wi->positions[wi->num_positions - 1] = cur->parent->line;
-                }
-                word = strtok(NULL, " ,.;:()[]{}<>'\"\n\r\t");
-            }
-        }
-        cur = cur->xmlChildrenNode;
-    }
-    return word_infos;
-}
+#include "word_extractor.h"
 
-void free_word_info(word_info_t *word_infos) 
-{
-    while (word_infos != NULL) {
-        word_info_t *next = word_infos->next;
-        free(word_infos->word);
-        free(word_infos->positions);
-        free(word_infos);
-        word_infos = next;
-    }
-}
+void create_database(word_info_t* word_list, int word_count) {
+    sqlite3* db;
+    char* err_msg = NULL;
 
-int save_word_info(sqlite3* db, word_info_t* word_info, int num_words, char *document_id) 
-{
-    sqlite3_stmt* stmt;
-    int rc;
-    char filename[256];
-    sprintf(filename, "../barrels/%s.db", document_id);
-    // Open the database file
-    rc = sqlite3_open(filename, &db);
+    // Check if the database file exists
+    int file_exists = access("words.db", F_OK) == 0;
+
+    // Open a connection to the database
+    int rc = sqlite3_open("words.db", &db);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Error opening database: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Failed to open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        return 1;
+        return;
     }
-    // Prepare the SQL statement for inserting word info into the database
-    const char* sql = "INSERT INTO word_info (word, count, positions) VALUES (?, ?, ?)";
+
+    // Create the "words" table if it doesn't exist
+    char* sql = "CREATE TABLE IF NOT EXISTS words ("
+                "word TEXT PRIMARY KEY,"
+                "count INTEGER,"
+                "position INTEGER"
+                ");";
+    rc = sqlite3_exec(db, sql, NULL, NULL, &err_msg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to create table: %s\n", err_msg);
+        sqlite3_free(err_msg);
+        sqlite3_close(db);
+        return;
+    }
+
+    // Insert the words into the "words" table
+    sql = "INSERT INTO words (word, count, position) VALUES (?, ?, ?);";
+    sqlite3_stmt* stmt;
     rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Error preparing statement: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        return 1;
+        return;
     }
-    // Bind each word_info to the statement parameters and execute the statement
-    for (int i = 0; i < num_words; i++) {
-        word_info_t* wi = &word_info[i];
-        // Create a comma-separated string of positions for this word
-        char positions_str[MAX_POSITIONS_STR_LEN] = "";
-        for (int j = 0; j < wi->num_positions; j++) {
-            char pos_str[10];
-            sprintf(pos_str, "%d", wi->positions[j]);
-            if (j != 0) {
-                strcat(positions_str, ",");
-            }
-            strcat(positions_str, pos_str);
-        }
-        // Bind the values to the statement parameters and execute the statement
-        sqlite3_bind_text(stmt, 1, wi->word, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_int(stmt, 2, wi->count);
-        sqlite3_bind_text(stmt, 3, positions_str, -1, SQLITE_TRANSIENT);
+
+    for (int i = 0; i < word_count; i++) {
+        sqlite3_bind_text(stmt, 1, word_list[i].word, strlen(word_list[i].word), SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, word_list[i].count);
+        sqlite3_bind_int(stmt, 3, word_list[i].position);
         rc = sqlite3_step(stmt);
-        if (rc != SQLITE_DONE) 
-        {
-            fprintf(stderr, "Error inserting word info: %s\n", sqlite3_errmsg(db));
-            sqlite3_finalize(stmt);
+        if (rc != SQLITE_DONE) {
+            fprintf(stderr, "Failed to insert row: %s\n", sqlite3_errmsg(db));
             sqlite3_close(db);
-            return 1;
+            return;
         }
-        sqlite3_clear_bindings(stmt);
         sqlite3_reset(stmt);
     }
+
+    // Finalize the statement and close the database connection
     sqlite3_finalize(stmt);
-    // Close the database connection
     sqlite3_close(db);
-    free_word_info(word_info);
-    return 0;
+
+    if (!file_exists) {
+        printf("Created new database file 'words.db'\n");
+    } else {
+        printf("Added %d new words to existing database file 'words.db'\n", word_count);
+    }
 }
 
+void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos) {
+    xmlNodePtr cur = NULL;
 
-int build_barrels(char *content, char *document_id) 
-{
-    xmlDocPtr doc;
-    doc = htmlReadMemory(content, strlen(content), NULL, NULL, HTML_PARSE_NOWARNING | HTML_PARSE_NOERROR);
-    if (doc == NULL) 
-    {
-        fprintf(stderr, "Error parsing document\n");
+    for (cur = node; cur != NULL; cur = cur->next) {
+        if (cur->type == XML_ELEMENT_NODE && strcmp((char*)cur->name, "p") == 0) {
+            char* text_content = (char*)xmlNodeGetContent(cur);
+
+            // Tokenize the text content into words
+            char* word = strtok(text_content, " ");
+            while (word != NULL) {
+                // Check if the word already exists in the list
+                int i;
+                for (i = 0; i < *word_count; i++) {
+                    if (strcmp((*word_list)[i].word, word) == 0) {
+                        (*word_list)[i].count++;
+                        break;
+                    }
+                }
+
+                // If the word doesn't exist in the list, add it
+                if (i == *word_count) {
+                    *word_list = realloc(*word_list, (*word_count + 1) * sizeof(word_info_t));
+                    strncpy((*word_list)[*word_count].word, word, MAX_WORD_LEN);
+                    (*word_list)[*word_count].count = 1;
+                    (*word_count)++;
+                }
+
+                // Store the position of the word
+                (*word_list)[i].position = *pos;
+
+                // Get the next word
+                word = strtok(NULL, " ");
+                (*pos)++;
+            }
+
+            xmlFree(text_content);
+        }
+
+        extract_words(cur->children, word_list, word_count, pos);
+    }
+}
+
+int main(int argc, char* argv[]) {
+    char* html_content = "<html><body><p>This is the first paragraph.</p><p>This is the second paragraph.</p></body></html>";
+
+    // Initialize libxml2 parser
+    xmlInitParser();
+
+    // Parse the HTML content
+    xmlDocPtr doc = xmlReadMemory(html_content, strlen(html_content), "noname.xml", NULL, 0);
+    if (doc == NULL) {
+        fprintf(stderr, "Failed to parse input\n");
         return 1;
     }
-    // Extract the words from the HTML document
-    word_info_t *word_infos = extract_words(doc);
-    // Save the word info to the database
-    int rc = save_word_info(word_infos, document_id);
-    if (rc != 0) 
-    {
-        fprintf(stderr, "Error saving word info\n");
-        return 1;
+
+    // Extract words from the <p> tags
+    xmlNodePtr root = xmlDocGetRootElement(doc);
+    word_info_t* word_list = NULL;
+    int word_count = 0;
+    int pos = 0;
+
+    extract_words(root->children, &word_list, &word_count, &pos);
+
+    // Print the list of words with their positions and counts
+    printf("Word\tPosition\tCount\n");
+    for (int i = 0; i < word_count; i++) {
+        printf("%s\t%d\t%d\n", word_list[i].word, word_list[i].position, word_list[i].count);
     }
+
+    create_database(word_list, word_count);
+
+    // Clean up
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+    free(word_list);
+
     return 0;
 }

@@ -5,25 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <ctype.h>
 #include <libxml/parser.h>
+#include <libxml/tree.h>
 #include <libxml/HTMLparser.h>
 #include <sqlite3.h>
+#include <unistd.h>
 
-#define MAX_POSITIONS_STR_LEN 100
 
-typedef struct word_info
-{
-    char *word;
+#define MAX_WORD_LEN 100
+
+typedef struct word_info {
+    char word[MAX_WORD_LEN];
     int count;
-    int *positions;
-    int num_positions;
-    struct word_info *next;
+    int position;
 } word_info_t;
 
-word_info_t *extract_words(xmlDocPtr doc);
-void free_word_info(word_info_t *word_infos);
-int save_word_info(sqlite3* db, word_info_t* word_info, int num_words, char *document_id);
-int build_barrels(char *content, char *document_id);
+void create_database(word_info_t* word_list, int word_count);
+void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos);
+int main(int argc, char* argv[]);
 
 #endif

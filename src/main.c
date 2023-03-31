@@ -5,6 +5,7 @@
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
 #include "indexer/link_extractor.h"
+#include "indexer/word_extractor.h"
 // #include "indexer/indexer.h"
 
 /* Parameters */
@@ -103,10 +104,12 @@ size_t follow_links(CURLM *multi_handle, memory *mem, char *url)
 
   struct stack *stack = new_stack();
   bparser(&stack, mem->buf, url, mem->size);
+  build_barrels(mem->buf, url);
 
   while(!is_empty_stack(stack))
   {
     char *link = unstack(stack);
+    //printf("\n\nunstacked %s\n", link);
     pthread_mutex_lock(&io_lock);
     if(!exist_webpage(link))
     {

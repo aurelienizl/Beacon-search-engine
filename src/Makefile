@@ -7,10 +7,16 @@ CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g
 # Library paths
 ZLIB_LIB := -lz -lcurl
 OPENSSL_LIB := -lcrypto
+XML_LIB := -lxml2
+XML_INC := `xml2-config --cflags`
+SQL_LIB := -lsqlite3
+
+# Includes
+INCLUDES := -I/usr/include/libxml2 -I/usr/include/sqlite3
 
 # Source files
 SRC := crawler/crawler.c database/store_server.c structures/string/operations.c main.c database/crypto.c database/io.c \
-structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/link_extractor.c
+structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/link_extractor.c indexer/word_extractor.c
 # Object files
 OBJ := $(SRC:.c=.o)
 
@@ -20,10 +26,10 @@ BIN := program
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) $(XML_LIB) $(SQL_LIB) -o $(BIN)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(XML2_INC) $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -f $(OBJ) $(BIN)
