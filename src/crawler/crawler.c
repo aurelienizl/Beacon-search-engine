@@ -112,7 +112,7 @@ size_t follow_links(CURLM *multi_handle, memory *mem, char *url, char *domain)
 			{
 				if (!exist_webpage(link))
 				{
-					if (strstr(link, ".php") != NULL)
+					if (strstr(link, ".php") == NULL)
 					{
 						curl_multi_add_handle(multi_handle, make_handle(link));
 						if (count++ == max_link_per_page)
