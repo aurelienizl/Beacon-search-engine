@@ -2,15 +2,15 @@
 
 # Compiler settings
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g
+CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g `pkg-config --cflags libxml-2.0`
 
 # Library paths
 ZLIB_LIB := -lz -lcurl
 OPENSSL_LIB := -lcrypto
+LIBXML2_LIB := `pkg-config --libs libxml-2.0`
 
 # Source files
-SRC := crawler/crawler.c database/store_server.c structures/string/operations.c main.c database/crypto.c database/io.c \
-structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/link_extractor.c
+SRC := crawler/crawler.c crawler/url_parser.c database/crypto.c database/io.c database/store_server.c structures/string/operations.c main.c 
 # Object files
 OBJ := $(SRC:.c=.o)
 
@@ -20,7 +20,7 @@ BIN := program
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) $(LIBXML2_LIB) -o $(BIN)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

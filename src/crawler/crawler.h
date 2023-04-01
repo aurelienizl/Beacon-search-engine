@@ -1,17 +1,18 @@
+#include <libxml/HTMLparser.h>
+#include <libxml/xpath.h>
+#include <libxml/uri.h>
+#include <curl/curl.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <err.h>
-#include <pthread.h>
+#include <math.h>
+#include <signal.h>
 
-#define BUFFER_SIZE 8192
+#include "../database/store_server.h"
 
-char *get_content(const char *domain, const char *path);
+int crawl(char *url);
+
+char *get_domain(char *link);
+
+int is_domain(char *url, char *domain);
+
+char *clean_php_url_for_crawler(char *url); 
