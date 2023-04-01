@@ -81,6 +81,7 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
             char* word = strtok(text_content, " ");
             while (word != NULL) {
                 // Check if the word already exists in the list
+                word = get_stem(word);
                 int i;
                 for (i = 0; i < *word_count; i++) {
                     if (strcmp((*word_list)[i].word, word) == 0) {
@@ -119,7 +120,7 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
 }
 
 int main(int argc, char* argv[]) {
-    char* html_content = "<html><body><p>This is the first paragraph.</p><p>This is the second paragraph.</p></body></html>";
+    char* html_content = "<html><body><p>This is live lives virtue virtuous</p><p>This is the second paragraph.</p></body></html>";
 
     // Initialize libxml2 parser
     xmlInitParser();

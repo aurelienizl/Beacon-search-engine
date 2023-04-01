@@ -11,6 +11,7 @@
 #include <libxml/HTMLparser.h>
 #include <sqlite3.h>
 #include <unistd.h>
+#include "lexicon.h"
 
 #define MAX_WORD_LEN 100
 
