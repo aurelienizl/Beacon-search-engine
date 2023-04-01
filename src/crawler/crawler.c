@@ -61,7 +61,7 @@ CURL *make_handle(char *url)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 2L);
 	curl_easy_setopt(handle, CURLOPT_COOKIEFILE, "");
 	curl_easy_setopt(handle, CURLOPT_FILETIME, 1L);
-	curl_easy_setopt(handle, CURLOPT_USERAGENT, "mini crawler");
+	curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0");
 	curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	curl_easy_setopt(handle, CURLOPT_UNRESTRICTED_AUTH, 1L);
 	curl_easy_setopt(handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
