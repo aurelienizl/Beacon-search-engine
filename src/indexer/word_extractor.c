@@ -1,66 +1,73 @@
 #include "word_extractor.h"
 
-void create_database(word_info_t* word_list, int word_count) {
+int create_database(word_info_t* word_list, int word_count, const char* db_path) {
     sqlite3* db;
-    char* err_msg = NULL;
+    char* err_msg = 0;
 
-    // Check if the database file exists
-    int file_exists = access("words.db", F_OK) == 0;
-
-    // Open a connection to the database
-    int rc = sqlite3_open("words.db", &db);
+    // Open the database connection
+    int rc = sqlite3_open(db_path, &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);
-        return;
+        return 1;
     }
 
-    // Create the "words" table if it doesn't exist
-    char* sql = "CREATE TABLE IF NOT EXISTS words ("
-                "word TEXT PRIMARY KEY,"
-                "count INTEGER,"
-                "position INTEGER"
-                ");";
-    rc = sqlite3_exec(db, sql, NULL, NULL, &err_msg);
+    // Create the words table
+    char* create_words_sql = "CREATE TABLE IF NOT EXISTS words (word TEXT PRIMARY KEY, count INT);";
+    rc = sqlite3_exec(db, create_words_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to create table: %s\n", err_msg);
+        fprintf(stderr, "Failed to create words table: %s\n", err_msg);
         sqlite3_free(err_msg);
         sqlite3_close(db);
-        return;
+        return 1;
     }
 
-    // Insert the words into the "words" table
-    sql = "INSERT INTO words (word, count, position) VALUES (?, ?, ?);";
-    sqlite3_stmt* stmt;
-    rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+    // Create the positions table
+    char* create_positions_sql = "CREATE TABLE IF NOT EXISTS positions (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));";
+    rc = sqlite3_exec(db, create_positions_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
+        fprintf(stderr, "Failed to create positions table: %s\n", err_msg);
+        sqlite3_free(err_msg);
         sqlite3_close(db);
-        return;
+        return 1;
     }
 
+    // Insert the word info into the database
+    sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
     for (int i = 0; i < word_count; i++) {
-        sqlite3_bind_text(stmt, 1, word_list[i].word, strlen(word_list[i].word), SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 2, word_list[i].count);
-        sqlite3_bind_int(stmt, 3, word_list[i].position);
-        rc = sqlite3_step(stmt);
-        if (rc != SQLITE_DONE) {
-            fprintf(stderr, "Failed to insert row: %s\n", sqlite3_errmsg(db));
+        // Insert the word count into the words table
+        char insert_words_sql[1024];
+        sprintf(insert_words_sql, "INSERT INTO words (word, count) VALUES ('%s', %d);", word_list[i].word, word_list[i].count);
+        rc = sqlite3_exec(db, insert_words_sql, 0, 0, &err_msg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Failed to insert word into words table: %s\n", err_msg);
+            sqlite3_free(err_msg);
             sqlite3_close(db);
-            return;
+            return 1;
         }
-        sqlite3_reset(stmt);
-    }
 
-    // Finalize the statement and close the database connection
-    sqlite3_finalize(stmt);
+        // Insert the positions into the positions table
+        struct list* current = word_list[i].positions->next;
+        while (current != NULL) {
+            int position = *((int*)current->data);
+            char insert_positions_sql[1024];
+            sprintf(insert_positions_sql, "INSERT INTO positions (word, position) VALUES ('%s', %d);", word_list[i].word, position);
+            rc = sqlite3_exec(db, insert_positions_sql, 0, 0, &err_msg);
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "Failed to insert position into positions table: %s\n", err_msg);
+                sqlite3_free(err_msg);
+                sqlite3_close(db);
+                return 1;
+            }
+            current = current->next;
+        }
+    }
+    sqlite3_exec(db, "COMMIT TRANSACTION", 0, 0, 0);
+
+    // Close the database connection
     sqlite3_close(db);
 
-    if (!file_exists) {
-        printf("Created new database file 'words.db'\n");
-    } else {
-        printf("Added %d new words to existing database file 'words.db'\n", word_count);
-    }
+    return 0;
 }
 
 void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos) {
@@ -78,6 +85,10 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
                 for (i = 0; i < *word_count; i++) {
                     if (strcmp((*word_list)[i].word, word) == 0) {
                         (*word_list)[i].count++;
+                        int* data = calloc(1, sizeof(int));
+                        *data = *pos;
+                        struct list* position = new_element(data);
+                        add_top((*word_list)[i].positions, position);
                         break;
                     }
                 }
@@ -87,11 +98,13 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
                     *word_list = realloc(*word_list, (*word_count + 1) * sizeof(word_info_t));
                     strncpy((*word_list)[*word_count].word, word, MAX_WORD_LEN);
                     (*word_list)[*word_count].count = 1;
+                    (*word_list)[*word_count].positions = new_list();
+                    int* data = calloc(1, sizeof(int));
+                    *data = *pos;
+                    struct list* position = new_element(data);
+                    add_top((*word_list)[*word_count].positions, position);
                     (*word_count)++;
                 }
-
-                // Store the position of the word
-                (*word_list)[i].position = *pos;
 
                 // Get the next word
                 word = strtok(NULL, " ");
@@ -129,10 +142,17 @@ int main(int argc, char* argv[]) {
     // Print the list of words with their positions and counts
     printf("Word\tPosition\tCount\n");
     for (int i = 0; i < word_count; i++) {
-        printf("%s\t%d\t%d\n", word_list[i].word, word_list[i].position, word_list[i].count);
+        printf("%s\t%d\n", word_list[i].word, word_list[i].count);
+        struct list* current = word_list[i].positions->next;
+        while(current != NULL)
+        {
+            printf("%d ", *((int*)current->data));
+            current = current->next;
+        }
+        printf("\n");
     }
 
-    create_database(word_list, word_count);
+    create_database(word_list, word_count, "../barrels/stuff.db");
 
     // Clean up
     xmlFreeDoc(doc);
