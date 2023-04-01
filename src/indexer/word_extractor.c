@@ -4,6 +4,13 @@ int create_database(word_info_t* word_list, int word_count, const char* db_path)
     sqlite3* db;
     char* err_msg = 0;
 
+    //check if database already exists
+    if(access(db_path, F_OK) == 0)
+    {
+        printf("The word Database for this page already exists\n");
+        return 0;
+    }
+
     // Open the database connection
     int rc = sqlite3_open(db_path, &db);
     if (rc != SQLITE_OK) {
@@ -81,6 +88,13 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
             char* word = strtok(text_content, " ");
             while (word != NULL) {
                 // Check if the word already exists in the list
+                normalize(word);
+                if(check_word(word))
+                {
+                    word = strtok(NULL, " ");
+                    (*pos)++;
+                    continue;
+                }
                 word = get_stem(word);
                 int i;
                 for (i = 0; i < *word_count; i++) {
