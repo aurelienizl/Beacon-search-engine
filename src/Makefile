@@ -6,7 +6,7 @@ CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g `pkg-config --cflags libxm
 
 # Library paths
 ZLIB_LIB := -lz -lcurl
-OPENSSL_LIB := -lcrypto
+OPENSSL_LIB := -lcrypto -lssl
 LIBXML2_LIB := `pkg-config --libs libxml-2.0` -lxml2
 
 # Source files
