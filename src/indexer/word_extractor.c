@@ -170,6 +170,15 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
             
             // Find the start of the next word
             while (!is_word_char(*word_end) && word_end < p_end) {
+                if((*word_end) == '<')
+                {
+                    word_end++;
+                    while ((*word_end) != '>' && word_end < p_end) 
+                    {
+                        word_end++;
+                    }
+                    //continue;
+                }
                 word_end++;
             }
             word_start = word_end;
@@ -199,7 +208,7 @@ int get_words(char* url, char* html_content) {
             printf("%d ", *((int*)current->data));
             current = current->next;
         }
-        printf("\n\n");
+        printf("\n");
     }
 
     char* directory = calloc(265, sizeof(char));
