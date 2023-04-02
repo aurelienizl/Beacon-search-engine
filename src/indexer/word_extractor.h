@@ -17,6 +17,7 @@
 #include "lexicon.h"
 
 #define MAX_WORD_LEN 100
+#define MAX_URL_LEN 512
 
 typedef struct word_info {
     char word[MAX_WORD_LEN];
@@ -24,7 +25,7 @@ typedef struct word_info {
     struct list* positions;
 } word_info_t;
 
-int create_database(word_info_t* word_list, int word_count, const char* db_path);
+int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path);
 int is_word_char(char c);
 void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos);
 int get_words(char* url, char* html_content);

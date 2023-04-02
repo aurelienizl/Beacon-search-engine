@@ -1,6 +1,6 @@
 #include "word_extractor.h"
 
-int create_database(word_info_t* word_list, int word_count, const char* db_path) {
+int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path) {
     sqlite3* db;
     char* err_msg = 0;
 
@@ -30,7 +30,8 @@ int create_database(word_info_t* word_list, int word_count, const char* db_path)
     }
 
     // Create the positions table
-    char* create_positions_sql = "CREATE TABLE IF NOT EXISTS positions (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));";
+    char create_positions_sql[1024];
+    sprintf(create_positions_sql, "CREATE TABLE IF NOT EXISTS '%s' (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));", url);
     rc = sqlite3_exec(db, create_positions_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create positions table: %s\n", err_msg);
@@ -58,7 +59,7 @@ int create_database(word_info_t* word_list, int word_count, const char* db_path)
         while (current != NULL) {
             int position = *((int*)current->data);
             char insert_positions_sql[1024];
-            sprintf(insert_positions_sql, "INSERT INTO positions (word, position) VALUES ('%s', %d);", word_list[i].word, position);
+            sprintf(insert_positions_sql, "INSERT INTO '%s' (word, position) VALUES ('%s', %d);", url, word_list[i].word, position);
             rc = sqlite3_exec(db, insert_positions_sql, 0, 0, &err_msg);
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "Failed to insert position into positions table: %s\n", err_msg);
@@ -216,7 +217,7 @@ int get_words(char* url, char* html_content) {
     strcpy(directory, "../barrels/");
     strcat(directory, checksum);
     strcat(directory, ".db");
-    create_database(word_list, word_count, (const char *)directory);
+    create_database(word_list, url, word_count, (const char *)directory);
 
     // Clean up
     free(word_list);
