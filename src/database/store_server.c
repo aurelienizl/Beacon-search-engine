@@ -3,7 +3,8 @@
 int exist_webpage(char *url)
 {
     char *db_directory = string_to_heap("db/");
-    char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
     char *path = string_concat(db_directory, folder_name);
 
     DIR *dir = opendir(path);

@@ -6,11 +6,18 @@
 #include <string.h>
 #include <zlib.h>
 #include <openssl/sha.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <ctype.h>
+
+
 #include "../structures/string/string.h"
+
 
 
 
@@ -19,6 +26,14 @@
 */
 
 char* sha1_hash(const unsigned char *data, size_t len);
+
+char *compress_array(char *data, size_t data_len);
+
+char* uncompress_array(char* data, size_t data_len);
+
+char* base64_encode(char* input);
+
+char* base64_decode(char* input);
 
 /*
 ** @note: The following section contains declarations of store_server.c file

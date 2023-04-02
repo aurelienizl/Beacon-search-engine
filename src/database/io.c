@@ -23,7 +23,8 @@ void rek_mkdir(char *path)
 void create_directory(char *url)
 {
     char *db_directory = string_to_heap("db/");
-    char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
     char *path = string_concat(db_directory, folder_name);
 
     rek_mkdir(path);
@@ -33,27 +34,45 @@ void create_directory(char *url)
     
 }
 
+void write_to_path(char* path, char* data)
+{
+    FILE *fp = fopen(path, "w");
+    if (fp == NULL)
+    {
+        printf("Failed to open file %s\n", path);
+        return;
+    }
+
+    fprintf(fp, "%s", data);
+    fclose(fp);
+}
+
 int write_to_file(char* data, char* url)
 {
     char *db_directory = string_to_heap("db/");
-    char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
     char *path = string_concat(db_directory, folder_name);
     char *filename = string_concat(path, "/index.html");
 
     create_directory(url);
     
-    FILE *fp = fopen(filename, "w");
-    if (fp == NULL)
-    {
-        printf("Failed to open file %s\n", filename);
-        return 0;
-    }
+    write_to_path(filename, data);
 
-    fprintf(fp, "%s", data);
-    fclose(fp);
+    char* compressed_data = compress_array(data, strlen(data));
+    char* compressed_filename = string_concat(path, "/index.html.gz");
 
+    write_to_path(compressed_filename, compressed_data);
+
+    free(compressed_data);
+    free(compressed_filename);
+    free(folder_name);
+    free(path);
+    free(filename);
     return 1;
 }
+
+
 
 char *io_get_file(char *path)
 {
