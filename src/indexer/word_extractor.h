@@ -25,7 +25,8 @@ typedef struct word_info {
 } word_info_t;
 
 int create_database(word_info_t* word_list, int word_count, const char* db_path);
-void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos);
+int is_word_char(char c);
+void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos);
 int get_words(char* url, char* html_content);
 
 #endif

@@ -77,29 +77,74 @@ int create_database(word_info_t* word_list, int word_count, const char* db_path)
     return 0;
 }
 
-void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos) {
-    xmlNodePtr cur = NULL;
+int is_word_char(char c) {
+    return isalnum(c) || c == '_';
+}
 
-    for (cur = node; cur != NULL; cur = cur->next) {
-        if (cur->type == XML_ELEMENT_NODE && strcmp((char*)cur->name, "p") == 0) {
-            char* text_content = (char*)xmlNodeGetContent(cur);
+void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos)
+{
+    char *p_start = NULL;
+    char *p_end = NULL;
+    char *word_start = NULL;
+    char *word_end = NULL;
 
-            // Tokenize the text content into words
-            char* word = strtok(text_content, " ");
-            while (word != NULL) {
-                // Check if the word already exists in the list
+    // Find the first <p> tag
+    p_start = strstr(html_content, "<p>");
+    
+    // Loop over all <p> tags
+    while (p_start != NULL) {
+        // Find the end of the <p> tag
+        p_end = strstr(p_start, "</p>");
+        if (p_end == NULL) {
+            break; // No end tag found, stop processing
+        }
+        
+        // Find the start of the first word inside the <p> tag
+        word_start = strstr(p_start, ">") + 1;
+        
+        // Loop over all words inside the <p> tag
+        char* word = calloc(MAX_WORD_LEN, sizeof(char));
+        
+        while (word_start < p_end) {
+            // Find the end of the current word
+            word_end = word_start;
+            while (is_word_char(*word_end) && word_end < p_end) {
+                word_end++;
+            }
+            
+            // Copy the current word to the words array
+            if (word_end > word_start) 
+            {
+                
+                int word_len = word_end - word_start;
+                if (word_len >= MAX_WORD_LEN) {
+                    word_len = MAX_WORD_LEN - 1;
+                }
+
+                strncpy(word, word_start, word_len);
+                word[word_len] = '\0';
+                
+                // Save the position of the current word
+                *pos = (int)(word_start - html_content);
+
                 normalize(word);
+                
                 if(check_word(word))
                 {
-                    word = strtok(NULL, " ");
-                    (*pos)++;
+                    while (!is_word_char(*word_end) && word_end < p_end) 
+                    {
+                        word_end++;
+                    }
+                    word_start = word_end;
                     continue;
                 }
+                
                 word = get_stem(word);
-                int i;
+                int i = 0;
                 for (i = 0; i < *word_count; i++) {
                     if (strcmp((*word_list)[i].word, word) == 0) {
                         (*word_list)[i].count++;
+                        //printf("updated %s, count %d, position, %d\n", word, (*word_list)[i].count, *pos);
                         int* data = calloc(1, sizeof(int));
                         *data = *pos;
                         struct list* position = new_element(data);
@@ -110,6 +155,7 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
 
                 // If the word doesn't exist in the list, add it
                 if (i == *word_count) {
+                    //printf("found %s, count %d, position %d\n", word, 1, *pos);
                     *word_list = realloc(*word_list, (*word_count + 1) * sizeof(word_info_t));
                     strncpy((*word_list)[*word_count].word, word, MAX_WORD_LEN);
                     (*word_list)[*word_count].count = 1;
@@ -120,49 +166,28 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
                     add_top((*word_list)[*word_count].positions, position);
                     (*word_count)++;
                 }
-
-                // Get the next word
-                word = strtok(NULL, " ");
-                (*pos)++;
             }
-
-            xmlFree(text_content);
+            
+            // Find the start of the next word
+            while (!is_word_char(*word_end) && word_end < p_end) {
+                word_end++;
+            }
+            word_start = word_end;
         }
-
-        extract_words(cur->children, word_list, word_count, pos);
+        
+        // Find the next <p> tag
+        p_start = strstr(p_end, "<p>");
     }
 }
 
 int get_words(char* url, char* html_content) {
 
-    // Initialize libxml2 parser
-    xmlInitParser();
-
-    // Step 1: Clean up the HTML content using libtidy
-    TidyBuffer output = {0};
-    TidyDoc tdoc = tidyCreate();
-    tidyParseString(tdoc, html_content);
-    tidyCleanAndRepair(tdoc);
-    tidyRunDiagnostics(tdoc);
-    tidySaveBuffer(tdoc, &output);
-    char* preprocessed_html_content = strdup((char*)output.bp);
-
-    // Parse the HTML content
-    xmlDocPtr doc = xmlReadMemory(preprocessed_html_content, strlen(preprocessed_html_content), url, NULL, 0);
-    if (doc == NULL) {
-        fprintf(stderr, "Failed to parse input\n");
-        return 1;
-    }
-
-    printf("%s\n", preprocessed_html_content);
-
-    // Extract words from the <p> tags
-    xmlNodePtr root = xmlDocGetRootElement(doc);
     word_info_t* word_list = NULL;
     int word_count = 0;
     int pos = 0;
 
-    extract_words(root->children, &word_list, &word_count, &pos);
+    extract_words(html_content, &word_list, &word_count, &pos);
+    printf("done parsing : %d\n", word_count);
 
     // Print the list of words with their positions and counts
     printf("Word\tPosition\tCount\n");
@@ -174,7 +199,7 @@ int get_words(char* url, char* html_content) {
             printf("%d ", *((int*)current->data));
             current = current->next;
         }
-        printf("\n");
+        printf("\n\n");
     }
 
     char* directory = calloc(265, sizeof(char));
@@ -185,8 +210,6 @@ int get_words(char* url, char* html_content) {
     create_database(word_list, word_count, (const char *)directory);
 
     // Clean up
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
     free(word_list);
 
     return 0;

@@ -21,7 +21,6 @@ int main()
     fclose(file);
 
     get_words("https://citizendium.org/wiki/Welcome_to_Citizendium", fileContent);
-    printf("%s\n", fileContent);
 
     return 0;
 }
