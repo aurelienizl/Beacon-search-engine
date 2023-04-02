@@ -133,18 +133,28 @@ void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, in
     }
 }
 
-int main(int argc, char* argv[]) {
-    char* html_content = "<html><body><p>This is live lives virtue virtuous</p><p>This is the second paragraph.</p></body></html>";
+int get_words(char* url, char* html_content) {
 
     // Initialize libxml2 parser
     xmlInitParser();
 
+    // Step 1: Clean up the HTML content using libtidy
+    TidyBuffer output = {0};
+    TidyDoc tdoc = tidyCreate();
+    tidyParseString(tdoc, html_content);
+    tidyCleanAndRepair(tdoc);
+    tidyRunDiagnostics(tdoc);
+    tidySaveBuffer(tdoc, &output);
+    char* preprocessed_html_content = strdup((char*)output.bp);
+
     // Parse the HTML content
-    xmlDocPtr doc = xmlReadMemory(html_content, strlen(html_content), "noname.xml", NULL, 0);
+    xmlDocPtr doc = xmlReadMemory(preprocessed_html_content, strlen(preprocessed_html_content), url, NULL, 0);
     if (doc == NULL) {
         fprintf(stderr, "Failed to parse input\n");
         return 1;
     }
+
+    printf("%s\n", preprocessed_html_content);
 
     // Extract words from the <p> tags
     xmlNodePtr root = xmlDocGetRootElement(doc);
@@ -167,7 +177,12 @@ int main(int argc, char* argv[]) {
         printf("\n");
     }
 
-    create_database(word_list, word_count, "../barrels/stuff.db");
+    char* directory = calloc(265, sizeof(char));
+    char* checksum = sha1_hash((const unsigned char *) url, strlen(url)); 
+    strcpy(directory, "../barrels/");
+    strcat(directory, checksum);
+    strcat(directory, ".db");
+    create_database(word_list, word_count, (const char *)directory);
 
     // Clean up
     xmlFreeDoc(doc);

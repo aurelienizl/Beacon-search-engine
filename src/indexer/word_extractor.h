@@ -11,6 +11,9 @@
 #include <libxml/HTMLparser.h>
 #include <sqlite3.h>
 #include <unistd.h>
+#include <tidy.h>
+#include <buffio.h>
+#include "../database/store_server.h"
 #include "lexicon.h"
 
 #define MAX_WORD_LEN 100
@@ -23,6 +26,6 @@ typedef struct word_info {
 
 int create_database(word_info_t* word_list, int word_count, const char* db_path);
 void extract_words(xmlNodePtr node, word_info_t** word_list, int* word_count, int* pos);
-int main(int argc, char* argv[]);
+int get_words(char* url, char* html_content);
 
 #endif

@@ -12,12 +12,14 @@ XML_INC := `xml2-config --cflags`
 SQL_LIB := -lsqlite3
 STEMMER_LIB := -L/path/to/libstemmer -lstemmer
 STEMMER_INC := -I/path/to/libstemmer/include
+TIDY_LIB := -ltidy
+TIDY_INC := -I/usr/include/tidy
 
 # Includes
 INCLUDES := -I/usr/include/libxml2 -I/usr/include/sqlite3
 
 # Source files
-SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c
+SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c ../database/crypto.c main.c
 # Object files
 OBJ := $(SRC:.c=.o)
 
@@ -27,10 +29,10 @@ BIN := word_extractor
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) $(XML_LIB) $(STEMMER_LIB) $(SQL_LIB) -o $(BIN)
+	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) $(XML_LIB) $(STEMMER_LIB) $(SQL_LIB) $(TIDY_LIB) -o $(BIN)
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(XML2_INC) $(STEMMER_INC) $(INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(XML2_INC) $(STEMMER_INC) $(TIDY_INC) $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -f $(OBJ) $(BIN)

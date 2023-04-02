@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="dns-prefetch" href="//fonts.gstatic.com"/>
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"/>
+  <link rel="dns-prefetch" href="//www.google-analytics.com"/>
+  <title>man icmp (7): Module ICMP IPv4 du noyau Linux</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="description" content="man icmp (7): Ce module du noyau implémente le protocole ICMP (Internet Control Message Protocol) défini dans la RFC 792. Il sert pour diagnostiquer et indiquer des conditions d&#39;erreurs. L&#39;utilisateur n&#39;interagit pas directement avec ce module. À la place, il communiqu">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link href="//fonts.googleapis.com/css?family=Open+Sans:300italic,300,400italic,400,600italic,600,700italic,700,800italic,800" rel="stylesheet" type="text/css">
+  <link href='//fonts.googleapis.com/css?family=Roboto+Condensed:400,700&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+  <link href='//fonts.googleapis.com/css?family=Droid+Sans+Mono' rel='stylesheet' type='text/css'>
+  <link data-turbolinks-track="true" href="/assets/application-f7897fbdd67c6822d0a0ff57b3ffc02f.css" media="all" rel="stylesheet" />
+  <script async="async" data-turbolinks-track="true" src="/assets/application-b47bf462822a1e5557c375def5c1aa58.js"></script>
+
+  <!--[if IE]>
+        
+    <![endif]-->
+<script type="text/javascript">
+//<![CDATA[
+      var LANG = 'fr';
+//]]>
+</script>
+  
+  <meta content="authenticity_token" name="csrf-param" />
+<meta content="kCLD7sGdCRMENUhpHISwWCkH3h/nz3IlxpNEy7W9t/M=" name="csrf-token" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-56225390-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+  <div class="header-container">
+    <header class="clearfix">
+      <div class="logo"><a href="/"><img src="/assets/logo-01e8ca9d4868e2e64bed82dde5c62d60.png" alt="logo"></a></div>
+       <!--
+        <nav>
+    <ul>
+        <li class="description selected"><a title="description" href="#description">DESCRIPTION</a></li>
+        <li class="notes"><a title="notes" href="#notes">NOTES</a></li>
+    </ul>
+  </nav>
+  -->
+      <div class="search">
+        <form accept-charset="UTF-8" action="/pagenames/autocomplete_page_name_name" method="post"><div style="display:none"><input name="utf8" type="hidden" value="&#x2713;" /><input name="authenticity_token" type="hidden" value="kCLD7sGdCRMENUhpHISwWCkH3h/nz3IlxpNEy7W9t/M=" /></div>
+            <input data-autocomplete="/pagenames/autocomplete_page_name_name" id="page_name_name" name="page_name[name]" placeholder="rechercher des fichiers homme..." type="text" />
+            <button type="submit" onclick="return false">
+              <img src="/assets/search_-5f10690007ebc2fbfce6cf9b1f687474.svg">
+            </button>
+</form>      </div>
+      <a class="mcat"><img src="/assets/menu-533ee2b7609b0e242c51d7f42ca18b7f.png"></a>
+    </header>
+  </div>
+  <div id="core">
+    <div class="main-wrapper">
+      <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/styles/default.min.css">
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.3/highlight.min.js"></script>
+
+<div class="manpages-show">
+
+
+<div class="main-container">
+  <main>
+
+    <div class="article-container">
+        <div class="article_table">
+            <span>icmp<i>(7)</i></span>
+            <span>Module ICMP IPv4 du noyau Linux</span>
+        </div>
+      <article>
+        <a name="description"></a><div class="section">
+<h2>DESCRIPTION</h2>
+Ce module du noyau implémente le protocole ICMP (Internet Control Message
+Protocol) défini dans la RFC 792. Il sert pour diagnostiquer et indiquer
+des conditions d'erreurs. L'utilisateur n'interagit pas directement avec ce
+module. À la place, il communique avec les autres protocoles dans le noyau,
+et ceux-ci transmettent les erreurs ICMP aux couches applicatives. Ce module
+répond également aux requêtes ICMP.
+<p>
+Un protocole utilisateur peut recevoir des paquets ICMP pour toutes les
+sockets locales en utilisant une socket <b>raw</b> avec le protocole
+<b>IPPROTO_ICMP</b>. Consultez la page <b><a class="man" category="7" href="/raw/7">raw</a></b>(7) pour plus de détails. Les types
+de paquets ICMP transmis à la socket peuvent être filtrés en utilisant
+l'option <b>ICMP_FILTER</b> de la socket. Les paquets ICMP sont toujours traités
+par le noyau aussi, même lorsqu'ils sont transmis à une socket utilisateur.
+</p><p>
+Linux limite le débit des paquets d'erreurs ICMP pour chaque
+destination. <b>ICMP_REDIRECT</b> et <b>ICMP_DEST_UNREACH</b> sont aussi limitées
+par la route de destination des paquets entrants.
+</p></div>
+<div class="section">
+<h2>Interfaces /proc</h2>
+ICMP prend en charge une série d'interfaces <i>/proc</i> pour configurer
+certains paramètres IP globaux. Ces paramètre sont accessibles en lisant ou
+écrivant les fichiers du répertoire <i>/proc/sys/net/ipv4/</i>. La plupart de
+ces paramètres sont des limitations de débit pour des types ICMP
+spécifiques. Linux 2.2 utilise un filtre à jeton pour limiter les ICMPs. La
+valeur est un délai en jiffies jusqu'à ce que le filtre soit vidé. Un jiffy
+est une unité de temps dépendant du système, en général 10ms sur i386 et
+environ 1ms sur alpha et ia64.
+<dl compact="compact">
+<dt><i>icmp_destunreach_rate</i> (Linux 2.2 à 2.4.9)</dt><dd>
+Fréquence maximale pour envoyer des paquets ICMP « Destination
+inaccessible ». Cela limite le débit avec lequel ces paquets sont émis vers
+des routes individuelles ou collectives. Cette limite n'affecte par l'envoi
+des paquets <b>ICMP_FRAG_NEEDED</b> nécessaire pour rechercher le MTU d'un
+chemin.
+</dd><dt><i>icmp_echo_ignore_all</i> (depuis Linux 2.2)</dt><dd>
+Si cette valeur est non nulle, Linux ignorera toutes les requêtes
+<b>ICMP_ECHO</b>.
+</dd><dt><i>icmp_echo_ignore_broadcasts</i> (depuis Linux 2.2)</dt><dd>
+Si cette valeur est non nulle, Linux ignorera toutes les requêtes
+<b>ICMP_ECHO</b> envoyées à une adresse broadcast.
+</dd><dt><i>icmp_echoreply_rate</i> (Linux 2.2 à 2.4.9)</dt><dd>
+Vitesse maximale pour envoyer les paquets <b>ICMP_ECHOREPLY</b> en réponse aux
+requêtes <b>ICMP_ECHOREQUEST</b>.
+</dd><dt><i>icmp_errors_use_inbound_ifaddr</i> (booléen ; désactivé par défaut ; depuis Linux 2.6.12)</dt><dd>
+Lorsqu'il est désactivé, les messages d'erreurs ICMP sont envoyés avec
+l'adresse primaire de l'interface existante.
+<p>
+Lorsqu'il est activé, le message est envoyé avec l'adresse primaire de
+l'interface qui a reçu le paquet qui a causé l'erreur ICMP. Il s'agit du
+comportement que beaucoup d'administrateurs réseau attendent d'un
+routeur. Et cela peut faciliter le déboguage de réseaux complexes.
+</p><p>
+Notez que s'il n'y a pas d'adresse primaire pour l'interface sélectionnée,
+l'adresse de la première interface n'étant pas une interface de boucle
+(loopback) et ayant une adresse primaire sera utilisée quelle que soit la
+configuration de ce booléen.
+</p></dd><dt><i>icmp_ignore_bogus_error_responses</i> (booléen ; désactivé par défaut ; depuis Linux 2.2)</dt><dd>
+Certains routeurs ne respectent pas la RFC 1122 et renvoient des réponses
+erronées aux trames de diffusion générale. C’est généralement enregistré
+dans les journaux comme des avertissements par le noyau. Si ce paramètre est
+activé, le noyau ne produira pas d'avertissement, ce qui évitera de
+surcharger le fichier de journal.
+</dd><dt><i>icmp_paramprob_rate</i> (Linux 2.2 à 2.4.9)</dt><dd>
+Débit maximal pour émettre les paquets <b>ICMP_PARAMETERPROB</b>. Ceux-ci sont
+envoyés lorsqu'un paquet arrive avec un en-tête IP incorrect.
+</dd><dt><i>icmp_ratelimit</i> (entier ; défaut : 1000 ; depuis Linux 2.4.10)</dt><dd>
+Limiter les taux maximum pour l'envoie de paquets ICMP dont le type
+correspond à <i>icmp_ratemask</i> (voir ci-dessous). 0 désactive toute limite,
+sinon il s'agit de l'intervalle minimum entre deux réponses, en
+millisecondes.
+</dd><dt><i>icmp_ratemask</i> (entier ; voir ci-dessous la valeur par défaut ; depuis Linux 2.4.10)</dt><dd>
+Masque de types ICMP pour lesquels les taux sont limités.
+<p>
+bit significatifs : IHGFEDCBA9876543210
+<br/>
+Masque par défaut : 0000001100000011000 (0x1818)
+</p><p>
+Définitions des bits (consultez le fichier <i>include/linux/icmp.h</i> dans les
+sources du noyau Linux) :
+</p><p>
+</p><dl compact="compact"><dt/><dd>
+<table>
+<tr valign="top"><td>0 Réponse Echo</td><td><br/></td></tr>
+<tr valign="top"><td>3 Destination inaccessible *</td><td><br/></td></tr>
+<tr valign="top"><td>4 Extinction de la source *</td><td><br/></td></tr>
+<tr valign="top"><td>5 Redirection</td><td><br/></td></tr>
+<tr valign="top"><td>8 Demande d'un Echo</td><td><br/></td></tr>
+<tr valign="top"><td>B Temps dépassé *</td><td><br/></td></tr>
+<tr valign="top"><td>C Problème de paramètre *</td><td><br/></td></tr>
+<tr valign="top"><td>D Demande d'horodatage</td><td><br/></td></tr>
+<tr valign="top"><td>E Horodatage en réponse</td><td><br/></td></tr>
+<tr valign="top"><td>F Demande d'information</td><td><br/></td></tr>
+<tr valign="top"><td>G Information en réponse</td><td><br/></td></tr>
+<tr valign="top"><td>H Demande d'un masque de sous-réseau</td><td><br/></td></tr>
+<tr valign="top"><td>I Masque de sous-réseau en réponse</td><td><br/></td></tr>
+</table>
+
+</dd></dl>
+
+<p>
+Les bits marqués d'un astérisque sont limités par défaut (voir le masque de
+bits par défaut ci-dessus).
+</p></dd><dt><i>icmp_timeexceed_rate</i> (Linux 2.2 à 2.4.9)</dt><dd>
+Débit maximal pour émettre les paquets <b>ICMP_TIME_EXCEEDED</b>. Ceux-ci sont
+envoyés pour empêcher les boucles quand un paquet a réalisé trop de sauts.
+</dd></dl>
+
+</div>
+<div class="section">
+<h2>VERSIONS</h2>
+La prise en charge des requêtes <b>ICMP_ADDRESS</b> a été supprimée dans le
+noyau 2.2.
+<p>
+La prise en charge pour <b>ICMP_SOURCE_QUENCH</b> a été supprimée dans
+Linux 2.2.
+</p></div>
+<a name="notes"></a><div class="section">
+<h2>NOTES</h2>
+Comme beaucoup d'autres implémentations ne prennent pas en charge les socket
+raw <b>IPPROTO_ICMP</b>, les programmes portables ne doivent pas se reposer sur
+cette fonctionnalité.
+<p>
+Les paquets <b>ICMP_REDIRECT</b> ne sont pas envoyés quand Linux ne fonctionne
+pas en routeur. Ils ne sont également acceptés que d'une passerelle
+précédemment définie dans la table de routage, et les routes de redirection
+expirent après un certain délai.
+</p><p>
+L'horodatage 64 bits renvoyé par <b>ICMP_TIMESTAMP</b> est en millisecondes
+depuis l'époque, 1er janvier 1970 à 00:00:00 (UTC).
+</p><p>
+En interne, l'ICMP Linux utilise une socket raw pour envoyer les
+ICMPs. Cette socket peut apparaître dans la sortie de <b><a class="man" category="8" href="/netstat/8">netstat</a></b>(8) avec un
+inœud nul.
+</p></div>
+<div class="section">
+<h2>COLOPHON</h2>
+Cette page fait partie de la publication 3.65 du projet <i>man-pages</i>
+Linux. Une description du projet et des instructions pour signaler des
+anomalies peuvent être trouvées à l'adresse
+<a href="http://www.kernel.org/doc/man-pages/.">http://www.kernel.org/doc/man-pages/.</a>
+
+</div>
+<div class="section">
+<h2>TRADUCTION</h2>
+Depuis 2010, cette traduction est maintenue à l'aide de l'outil
+po4a &lt;<a href="http://po4a.alioth.debian.org/">http://po4a.alioth.debian.org/</a>&gt; par l'équipe de
+traduction francophone au sein du projet perkamon
+&lt;<a href="http://perkamon.alioth.debian.org/">http://perkamon.alioth.debian.org/</a>&gt;.
+<p>
+Christophe Blaess &lt;<a href="http://www.blaess.fr/christophe/">http://www.blaess.fr/christophe/</a>&gt; (1996-2003),
+Alain Portal &lt;<a href="http://manpagesfr.free.fr/">http://manpagesfr.free.fr/</a>&gt; (2003-2006).
+Julien Cristau et l'équipe francophone de traduction de Debian (2006-2009).
+</p><p>
+Veuillez signaler toute erreur de traduction en écrivant à
+&lt;<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="177372757e76793a7b2627793a71657279747f577b7e646364397372757e767939786570">[email&#160;protected]</a>&gt; ou par un rapport de bogue sur
+le paquet <b>manpages-fr</b>.
+</p><p>
+Vous pouvez toujours avoir accès à la version anglaise de ce document en
+utilisant la commande
+« <b>man -L C</b> <i>&lt;section&gt;</i> <i>&lt;page_de_man&gt;</i> ».
+</p><p>
+
+</p></div>
+
+      </article>
+    </div>
+
+
+  </main>
+</div>
+<div class="nav-container">
+<div class="nav">
+<div class="inner">
+  <nav class="box">
+    <h4>CONTENU</h4>
+    <ul>
+        <li class="description selected"><a title="description" href="#description">DESCRIPTION</a></li>
+        <li class="notes"><a title="notes" href="#notes">NOTES</a></li>
+    </ul>
+  </nav>
+
+  <div class="box lang">
+    <h4>TRADUCTIONS</h4>
+    <ul>
+        <li class="en"><a class="c7" href="https://manpages.org/icmp/7"><i></i>ANGLAIS</a></li>
+        <li class="ja"><a class="c7" href="https://ja.manpages.org/icmp/7"><i></i>JAPONAIS</a></li>
+        <li class="en"><a class="c7" href="https://manpages.org/icmp/7"><i></i>ANGLAIS</a></li>
+        <li class="ru"><a class="c7" href="https://ru.manpages.org/icmp/7"><i></i>RUSSIE</a></li>
+        <li class="es"><a class="c7" href="https://es.manpages.org/icmp/7"><i></i>ESPANOL</a></li>
+    </ul>
+  </div>
+  
+
+<!--
+    <div class="ads">
+      <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:250px"
+           data-ad-client="ca-pub-2811344342425918"
+           data-ad-slot="5277441578"></ins>
+      <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+-->
+    <div class="box see-also">
+      <h4>VOIR ÉGALEMENT</h4>
+      <ul class="clearfix">
+            <li><a href="https://fr.manpages.org/ip/7" class="c7">ip <span>(7)</span></a></li>
+      </ul>
+    </div>
+
+        <div class="box last-searched">
+          <h4>DERNIER RECHERCHÉ</h4>
+          <ul class="clearfix">
+                <li><a href="https://fr.manpages.org/icmp/7" class="c7">icmp <span>(7)</span></a></li>
+                <li><a href="https://fr.manpages.org/netstat/8" class="c8">netstat <span>(8)</span></a></li>
+                <li><a href="https://fr.manpages.org/inet_ntop/3" class="c3">inet_ntop <span>(3)</span></a></li>
+                <li><a href="https://fr.manpages.org/inet_pton/3" class="c3">inet_pton <span>(3)</span></a></li>
+                <li><a href="https://fr.manpages.org/getservent/3" class="c3">getservent <span>(3)</span></a></li>
+                <li><a href="https://fr.manpages.org/pread/2" class="c2">pread <span>(2)</span></a></li>
+                <li><a href="https://fr.manpages.org/setsockopt/2" class="c2">setsockopt <span>(2)</span></a></li>
+                <li><a href="https://fr.manpages.org/tcp/7" class="c7">tcp <span>(7)</span></a></li>
+                <li><a href="https://fr.manpages.org/iconv_close/3" class="c3">iconv_close <span>(3)</span></a></li>
+                <li><a href="https://fr.manpages.org/inet_aton/3" class="c3">inet_aton <span>(3)</span></a></li>
+                <li><a href="https://fr.manpages.org/adjtimex/2" class="c2">adjtimex <span>(2)</span></a></li>
+          </ul>
+        </div>
+</div>
+  </div>
+  </div>
+
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+$(document).ready(function() {
+    $('pre, code').each(function(i, block) {
+    hljs.highlightBlock(block);
+    });
+});
+</script>
+
+    </div>
+  </div>
+  <div class="overlay"></div>
+  <div class="overlay_"></div>
+</body>
+</html>
