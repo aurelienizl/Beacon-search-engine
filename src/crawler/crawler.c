@@ -1,8 +1,8 @@
 #include "crawler.h"
 
 int max_con = 200;
-int max_total = 20000;
-int max_requests = 500;
+int max_total = 200000;
+int max_requests = 5000;
 int max_link_per_page = 50;
 int follow_relative_links = 1;
 

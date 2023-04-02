@@ -1,9 +1,3 @@
-/*
- * Author: Izoulet Aurélien
- * Purpose: Store server.
- * Language: C.
- */
-
 #ifndef _STORE_SERVER_H_
 #define _STORE_SERVER_H_
 

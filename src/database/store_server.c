@@ -1,13 +1,4 @@
-/*
- * Author: Izoulet Aurélien
- * Purpose: Store server.
- * Language: C.
- */
-
 #include "store_server.h"
-
-
-
 
 int exist_webpage(char *url)
 {
