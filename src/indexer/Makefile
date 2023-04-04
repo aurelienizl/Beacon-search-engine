@@ -19,7 +19,7 @@ TIDY_INC := -I/usr/include/tidy
 INCLUDES := -I/usr/include/libxml2 -I/usr/include/sqlite3
 
 # Source files
-SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c ../database/crypto.c main.c
+SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c ../database/crypto.c table.c main.c
 # Object files
 OBJ := $(SRC:.c=.o)
 
@@ -37,3 +37,11 @@ $(BIN): $(OBJ)
 clean:
 	rm -f $(OBJ) $(BIN)
 	rm ../barrels/*
+	rm reverse_vector.db
+
+killexec:
+	rm -f $(OBJ) $(BIN)
+	rm reverse_vector.db
+
+
+

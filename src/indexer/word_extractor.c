@@ -31,7 +31,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
 
     // Create the positions table
     char create_positions_sql[1024];
-    sprintf(create_positions_sql, "CREATE TABLE IF NOT EXISTS '%s' (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));", url);
+    sprintf(create_positions_sql, "CREATE TABLE IF NOT EXISTS positions (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));");
     rc = sqlite3_exec(db, create_positions_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create positions table: %s\n", err_msg);
@@ -40,8 +40,32 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
         return 1;
     }
 
-    // Insert the word info into the database
+    // Create anchor table 
+    char create_anchor_sql[1024];
+    sprintf(create_anchor_sql, "CREATE TABLE IF NOT EXISTS anchor (url TEXT);");
+    rc = sqlite3_exec(db, create_anchor_sql, 0, 0, &err_msg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to create anchor table: %s\n", err_msg);
+        sqlite3_free(err_msg);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    // Insertions
     sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
+    
+    // Insert the info into the anchor table
+    char insert_info_sql[1024];
+        sprintf(insert_info_sql, "INSERT INTO anchor (url) VALUES ('%s');", url);
+        rc = sqlite3_exec(db, insert_info_sql, 0, 0, &err_msg);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Failed to insert word into words table: %s\n", err_msg);
+            sqlite3_free(err_msg);
+            sqlite3_close(db);
+            return 1;
+        }
+
+
     for (int i = 0; i < word_count; i++) {
         // Insert the word count into the words table
         char insert_words_sql[1024];
@@ -59,7 +83,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
         while (current != NULL) {
             int position = *((int*)current->data);
             char insert_positions_sql[1024];
-            sprintf(insert_positions_sql, "INSERT INTO '%s' (word, position) VALUES ('%s', %d);", url, word_list[i].word, position);
+            sprintf(insert_positions_sql, "INSERT INTO positions (word, position) VALUES ('%s', %d);", word_list[i].word, position);
             rc = sqlite3_exec(db, insert_positions_sql, 0, 0, &err_msg);
             if (rc != SQLITE_OK) {
                 fprintf(stderr, "Failed to insert position into positions table: %s\n", err_msg);
