@@ -3,13 +3,14 @@
 int max_con = 200;
 int max_total = 200000;
 int max_requests = 5000;
-int max_link_per_page = 50;
+size_t max_link_per_page = 50;
 int follow_relative_links = 1;
 
 int pending_interrupt = 0;
 
 void sighandler(int dummy)
 {
+	printf("Interrupted %i\n", dummy);
 	pending_interrupt = 1;
 }
 
