@@ -11,8 +11,6 @@
 #include <libxml/HTMLparser.h>
 #include <sqlite3.h>
 #include <unistd.h>
-#include <tidy.h>
-#include <buffio.h>
 #include "../database/store_server.h"
 #include "lexicon.h"
 
