@@ -226,18 +226,6 @@ DB Size : 230 MB</property>
             <property name="y">180</property>
           </packing>
         </child>
-        <child>
-          <object class="GtkListBox" id="listBox">
-            <property name="width-request">100</property>
-            <property name="height-request">80</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-          </object>
-          <packing>
-            <property name="x">460</property>
-            <property name="y">350</property>
-          </packing>
-        </child>
       </object>
     </child>
   </object>

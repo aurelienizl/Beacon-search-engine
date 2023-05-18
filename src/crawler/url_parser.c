@@ -1,58 +1,42 @@
 #include "crawler.h"
+#include <string.h>
+#include <ctype.h>
 
-int is_domain(char *url, char *domain)
+int is_domain(const char *url, const char *domain)
 {
-    if (strstr(url, domain) != NULL)
-        return 1;
-    else
+    if (url == NULL || domain == NULL) {
         return 0;
+    }
+    return (strstr(url, domain) != NULL) ? 1 : 0;
 }
 
-char *get_domain(char *link)
+char *get_domain(const char *link)
 {
-    char start[5] = "http";
-    char *domain = calloc(sizeof(char), strlen(link) + 1);
-    size_t i = 0;
-
-    while (i < 4)
-    {
-        if (link[i] < 97)
-        {
-            if (start[i] != (link[i] + 32))
-            {
-                break;
-            }
-        }
-        else
-        {
-            if (start[i] != link[i])
-            {
-                break;
-            }
-        }
-        i++;
-    }
-
-    if (i != 4)
+    if (link == NULL) {
         return NULL;
-
-    if (link[i] == 's')
-        i++;
-
-    size_t j = 0;
-    i += 3;
-    while (link[i] != '\0')
-    {
-        if (link[i] == '/')
-        {
-            break;
-        }
-        domain[j] = link[i];
-        i++;
-        j++;
     }
 
-    domain[j] = '\0';
-    domain = realloc(domain, sizeof(char) * (j + 1));
+    // Check if link starts with "http" or "https"
+    if (strncasecmp(link, "http", 4) != 0) {
+        return NULL;
+    }
+
+    size_t i = (link[4] == 's') ? 5 : 4;
+    if (link[i] != ':' || link[i + 1] != '/' || link[i + 2] != '/') {
+        return NULL;
+    }
+
+    i += 3;  // Skip "://"
+    const char *domain_start = &link[i];
+    const char *slash = strchr(domain_start, '/');
+
+    size_t domain_len = (slash != NULL) ? (size_t)(slash - domain_start) : strlen(domain_start);
+    char *domain = (char *)malloc(sizeof(char) * (domain_len + 1));
+
+    if (domain != NULL) {
+        strncpy(domain, domain_start, domain_len);
+        domain[domain_len] = '\0';
+    }
+
     return domain;
 }

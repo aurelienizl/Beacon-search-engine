@@ -3,7 +3,7 @@
 <interface>
   <requires lib="gtk+" version="3.24"/>
   <object class="GtkTextBuffer" id="databaseInfo">
-    <property name="text" translatable="yes">DB :  /home/lucien/Desktop/Epita/Project.db
+    <property name="text" translatable="yes">DB :  /home/aurelien/Desktop/Epita/Project.db
 DB Size : 230 MB</property>
   </object>
   <object class="GtkWindow" id="mainWindow">
@@ -184,19 +184,6 @@ DB Size : 230 MB</property>
           </packing>
         </child>
         <child>
-          <object class="GtkImage" id="engineNameImage">
-            <property name="width-request">100</property>
-            <property name="height-request">80</property>
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="pixbuf">img/projectName.png</property>
-          </object>
-          <packing>
-            <property name="x">350</property>
-            <property name="y">170</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkSearchEntry" id="inputSearch">
             <property name="width-request">230</property>
             <property name="visible">True</property>
@@ -226,6 +213,29 @@ DB Size : 230 MB</property>
           </object>
           <packing>
             <property name="y">700</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkImage" id="engineNameImage">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="pixbuf">img/image.png</property>
+          </object>
+          <packing>
+            <property name="x">475</property>
+            <property name="y">180</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkListBox" id="listBox">
+            <property name="width-request">100</property>
+            <property name="height-request">80</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+          </object>
+          <packing>
+            <property name="x">460</property>
+            <property name="y">350</property>
           </packing>
         </child>
       </object>

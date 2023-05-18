@@ -4,14 +4,25 @@ char* sha1_hash(const unsigned char *data, size_t len)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
     SHA1(data, len, digest);
+
+    static const char hex_table[] = "0123456789abcdef";
     char *sha1string = (char *)malloc(SHA_DIGEST_LENGTH * 2 + 1);
-    for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+
+    if (!sha1string) 
     {
-        sprintf(&sha1string[i * 2], "%02x", (unsigned int)digest[i]);
+        fprintf(stderr, "Memory allocation failed in sha1_hash\n");
+        return NULL;
+    }
+
+    for (int i = 0; i < SHA_DIGEST_LENGTH; ++i)
+    {
+        sha1string[i * 2] = hex_table[digest[i] >> 4];
+        sha1string[i * 2 + 1] = hex_table[digest[i] & 0x0F];
     }
     sha1string[SHA_DIGEST_LENGTH * 2] = '\0';
     return sha1string;
 }
+
 
 char *compress_array(char *data, size_t data_len)
 {
