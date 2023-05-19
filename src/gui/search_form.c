@@ -1,4 +1,6 @@
-#include "gui.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 struct results
 {
@@ -17,9 +19,9 @@ struct results *generate_random_results()
     {
         struct results *new_result = malloc(sizeof(struct results));
         // Generate random title.
-        new_result->title = "Title";
-        new_result->url = "http://www.google.fr";
-        new_result->description = "Description";
+        new_result->title = strdup("Titled");
+        new_result->url = strdup("http://www.google.fr");
+        new_result->description = strdup("Description");
         new_result->next = NULL;
         if (results == NULL)
         {
@@ -35,111 +37,93 @@ struct results *generate_random_results()
     return results;
 }
 
-void on_row_activated(GtkListBox *list, GtkListBoxRow *row, gpointer user_data)
+/*
+<div class="searchresult">
+            <h2>{TITLE}</h2>
+            <a href="{URL}">{URL}</a> <button>▼</button>
+            <p>{DESCRIPTION}</p>
+        </div>
+
+*/
+
+char *build_block_result(const char *title, const char *url, const char *description)
 {
-    g_print("Row %d activated.\n", gtk_list_box_row_get_index(row));
+    const char *block = 
+    "<div class=\"searchresult\">"
+        "<h2>{TITLE}</h2>"
+        "<a href=\"{URL}\">{URL}</a> <button>▼</button>"
+        "<p>{DESCRIPTION}</p>"
+    "</div>";
 
-    GtkWidget *box = gtk_bin_get_child(GTK_BIN(row));
-    GList *children = gtk_container_get_children(GTK_CONTAINER(box));
+    size_t blockLength = strlen(block);
+    size_t titleLength = strlen(title);
+    size_t urlLength = strlen(url);
+    size_t descriptionLength = strlen(description);
 
-    GtkWidget *title_label = g_list_nth_data(children, 0);
-    GtkWidget *url_label = g_list_nth_data(children, 1);
-    GtkWidget *description_label = g_list_nth_data(children, 2);
+    char *res = malloc(blockLength + titleLength + urlLength + descriptionLength + 1);
+    if (res == NULL)
+    {
+        perror("Memory allocation failed");
+        return NULL;
+    }
 
-    const char *title = gtk_label_get_text(GTK_LABEL(title_label));
-    const char *url = gtk_label_get_text(GTK_LABEL(url_label));
-    const char *description = gtk_label_get_text(GTK_LABEL(description_label));
+    char *ptr = res;
+    size_t i = 0;
 
-    g_print("Title: %s\n", title);
-    g_print("URL: %s\n", url);
-    g_print("Description: %s\n", description);
+    while (*block)
+    {
+        if (strncmp(block, "{TITLE}", 7) == 0)
+        {
+            strcpy(ptr, title);
+            ptr += titleLength;
+            block += 7;
+        }
+        else if (strncmp(block, "{URL}", 5) == 0)
+        {
+            strcpy(ptr, url);
+            ptr += urlLength;
+            block += 5;
+        }
+        else if (strncmp(block, "{DESCRIPTION}", 13) == 0)
+        {
+            strcpy(ptr, description);
+            ptr += descriptionLength;
+            block += 13;
+        }
+        else
+        {
+            *ptr++ = *block++;
+        }
+    }
 
-    g_list_free(children);
+    *ptr = '\0';
+
+    return res;
 }
 
-
-void display_new_form_with_results(char *request)
+int main(void)
 {
     struct results *results = generate_random_results();
-
-    // Create a new window
-    GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(window), "Results");
-
-    // Set the window's default size
-    gtk_window_set_default_size(GTK_WINDOW(window), 800, 600);
-    
-
-    // Create a new vertical box to arrange widgets vertically
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-    gtk_container_add(GTK_CONTAINER(window), vbox);
-
-    // Create a new scrolled window to display results
-    GtkWidget *scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
-    // Add results to the scrolled window
-    GtkWidget *list = gtk_list_box_new();
-    gtk_container_add(GTK_CONTAINER(scrolled_window), list);
-    gtk_box_pack_start(GTK_BOX(vbox), scrolled_window, TRUE, TRUE, 0);
-
-    g_signal_connect(list, "row-activated", G_CALLBACK(on_row_activated), NULL);
-
     struct results *current = results;
-
     while (current != NULL)
     {
-        GtkWidget *row = gtk_list_box_row_new();
-        gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(row), TRUE);
-        gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), TRUE);
-        
-        GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-        gtk_container_add(GTK_CONTAINER(row), box);
-
-        GtkWidget *title = gtk_label_new(current->title);
-        gtk_box_pack_start(GTK_BOX(box), title, TRUE, TRUE, 0);
-
-        GtkWidget *url = gtk_label_new(current->url);
-        gtk_box_pack_start(GTK_BOX(box), url, TRUE, TRUE, 0);
-
-        GtkWidget *description = gtk_label_new(current->description);
-        gtk_box_pack_start(GTK_BOX(box), description, TRUE, TRUE, 0);
-
-        gtk_container_add(GTK_CONTAINER(list), row);
-        
-        // Connect the "activate" signal to each row
-        g_signal_connect(row, "activate", G_CALLBACK(open_url_in_browser), current->url);
-
+        char *block = build_block_result(current->title, current->url, current->description);
+        printf("%s\n", block);
+        free(block);
         current = current->next;
     }
 
-    // Display the window and all its content
-    gtk_widget_show_all(window);
-
-    // Cleanup results
-    free_results(results);
-}
-
-void open_url_in_browser(GtkWidget *row, gpointer data)
-{
-    char *url = (char *)data;
-    GError *error = NULL;
-    gtk_show_uri_on_window(NULL, url, gtk_get_current_event_time(), &error);
-    if (error != NULL)
+    // Cleanup
+    current = results;
+    while (current != NULL)
     {
-        g_print("Could not launch the specified URI.\n");
-        g_error_free(error);
+        struct results *next = current->next;
+        free(current->title);
+        free(current->url);
+        free(current->description);
+        free(current);
+        current = next;
     }
-    g_print("Opening url : %s\n", url);
-}
 
-void free_results(struct results *results)
-{
-    struct results *tmp;
-    while (results != NULL)
-    {
-        tmp = results;
-        results = results->next;
-        free(tmp);
-    }
+    return 0;
 }
