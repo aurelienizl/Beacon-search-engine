@@ -3,7 +3,7 @@ PKGCONFIG = $(shell which pkg-config)
 CFLAGS = $(shell $(PKGCONFIG) --cflags gtk+-3.0) -Wall -Wextra -rdynamic
 LIBS = $(shell $(PKGCONFIG) --libs gtk+-3.0)
 
-SRC = gui.c signals.c tools.c searcher.c
+SRC = gui.c tools.c search_form.c 
 
 OBJS = $(SRC:.c=.o)
 

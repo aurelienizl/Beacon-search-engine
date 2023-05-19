@@ -10,14 +10,6 @@
 #include <gtk/gtk.h>
 #include <string.h>
 
-// Contains all signals from the main gui window. 
-
-/**
-** @brief             Signals handlers methods. 
-** @param widget      Widget that triggered the signal. 
-** @param userdata    Current userdata.
-** @return            Void.
-*/
 
 void on_buttonSave_activate(GtkWidget *widget, gpointer *userdata);
 
@@ -43,17 +35,13 @@ void on_buttonWebsite_activate(GtkWidget *widget, gpointer *userdata);
  
 void on_inputSearch_activate(GtkWidget *widget, gpointer *userdata);
 
-// Contains all tools used by the main gui window. 
-
-/**
-** @brief             Open a dialog and override current database path. 
-** @return            Void.
-*/
-
-void open_db();
-
-// Contains all methods used by the search engine.
+gchar* open_db();
 
 void display_new_form(char* text);
+
+void display_new_form_with_results(char* request);
+
+void open_url_in_browser(GtkWidget *row, gpointer data);
+
 
 #endif  
