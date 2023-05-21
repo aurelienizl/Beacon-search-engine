@@ -1,4 +1,4 @@
-#include "score.h"
+#include "search.h"
 
 struct result* init_result(const char* url, int score)
 {
@@ -28,6 +28,31 @@ struct result* unstack_result(struct result* result, struct result** element)
     free(result);
 
     return new_head;
+}
+
+struct result* insert_result(struct result* result, struct result* new_result)
+{
+    if(result->score < new_result->score)
+    {
+        new_result->next = result;
+        return new_result;
+    }
+
+    struct result* current = result;
+    while(current->next != NULL)
+    {
+        if(current->next->score < new_result->score)
+        {
+            new_result->next = current->next;
+            current->next = new_result;
+            return result;
+        }
+
+        current = current->next;
+    }
+
+    current->next = new_result;
+    return result;
 }
 
 void add_url_to_results(struct result** results, const char* url, int inc) 
@@ -75,7 +100,7 @@ struct result** get_pages(struct chunk** words, int num_words)
     // Construct the SQL query dynamically using the input words
     
     // For the SAME EXACT word
-    char query[256];
+    char query[512];
     strcpy(query, "SELECT word, count, url FROM reverse_vector WHERE word IN (");
     for (int i = 0; i < num_words; i++) {
         strcat(query, "'");
@@ -86,22 +111,6 @@ struct result** get_pages(struct chunk** words, int num_words)
         }
     }
     strcat(query, ");");
-
-    /*
-    char query[256];
-    strcpy(query, "SELECT word, count, url FROM reverse_vector WHERE ");
-    for (int i = 0; i < num_words; i++) 
-    {
-        strcat(query, "word LIKE '%");
-        strcat(query, words[i]->word);
-        strcat(query, "%'");
-        if (i < num_words - 1) 
-        {
-            strcat(query, " OR ");
-        }
-    }
-    strcat(query, ";");
-    */
 
     rc = sqlite3_exec(db, query, process_database_callback, results, &error_message);
     if (rc != SQLITE_OK) {
@@ -114,7 +123,7 @@ struct result** get_pages(struct chunk** words, int num_words)
     return results;
 }
 
-
+/*
 int main() 
 {
     struct result** results;
@@ -134,3 +143,4 @@ int main()
 
     return 0;
 }
+*/

@@ -71,6 +71,7 @@ struct chunk** extractWords(const char* query, int* chunkCount) {
             //create that word, add it to the list 
             result = realloc(result, (count + 1) * sizeof(struct chunk));
             normalize(token);
+            token = get_stem(token);
             result[count] = init_chunk(strdup(token), token[0] == '$', strchr(token, '*') != NULL);
             count++;
         }
