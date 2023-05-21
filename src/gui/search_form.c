@@ -218,6 +218,19 @@ void insert_blocks_into_template(char **template, struct results *results) {
     replace_substring(template, end_placeholder, start_placeholder);
 }
 
+void array_to_file(char* path, char* data)
+{
+    FILE *fp = fopen(path, "w");
+    if (fp == NULL)
+    {
+        printf("Failed to open file %s\n", path);
+        return;
+    }
+
+    fprintf(fp, "%s", data);
+    fclose(fp);
+}
+
 #pragma endregion Htlm_Builder
 
 #pragma region IP_Address
@@ -264,10 +277,9 @@ char* get_public_ip() {
 
 #pragma endregion IP_Address
 
-int main(void)
+int launch_searcher(char* request)
 {
     struct results *results = generate_random_results();
-    char* request = "How to make cookies ?";
 
     if (results == NULL)
     {
@@ -319,8 +331,18 @@ int main(void)
     replace_substring(&template, "{RESULTSNUMBER}", str);
     insert_blocks_into_template(&template, results);
 
-    printf("%s\n", template);
+    array_to_file("interface/results/generated_page.html", template);
 
+    // Open the generated page in the default browser.
+    int status = system("xdg-open interface/results/generated_page.html");
+    if (status == -1)
+    {
+        fprintf(stderr, "Failed to open generated page in the default browser\n");
+        free_results(results);
+        free(template);
+        free(ip);
+        return 1;
+    }
     // Cleanup
     
     free_results(results);
