@@ -1,4 +1,5 @@
 #include "crawler.h"
+#include <signal.h>
 
 int max_con = 200;
 int max_total = 200000;
@@ -8,10 +9,12 @@ int follow_relative_links = 1;
 
 volatile sig_atomic_t pending_interrupt = 0;
 
+pthread_mutex_t mutex_io = PTHREAD_MUTEX_INITIALIZER;
+
 void sighandler(int dummy)
 {
-    printf("Interrupted %i\n", dummy);
-    pending_interrupt = 1;
+	printf("Interrupted %i\n", dummy);
+	pending_interrupt = 1;
 }
 
 /* resizable buffer */
@@ -40,37 +43,41 @@ size_t grow_buffer(void *contents, size_t sz, size_t nmemb, void *ctx)
 
 CURL *make_handle(char *url)
 {
-    if (url == NULL) {
-        printf("URL is NULL\n");
-        return NULL;
-    }
+	if (url == NULL)
+	{
+		printf("URL is NULL\n");
+		return NULL;
+	}
 
-    CURL *handle = curl_easy_init();
+	CURL *handle = curl_easy_init();
 
-    if (!handle) {
-        printf("Cannot initialize CURL handle\n");
-        return NULL;
-    }
+	if (!handle)
+	{
+		printf("Cannot initialize CURL handle\n");
+		return NULL;
+	}
 
 	/* Important: use HTTP2 over HTTPS */
 	curl_easy_setopt(handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
 	curl_easy_setopt(handle, CURLOPT_URL, url);
 
 	memory *mem = malloc(sizeof(memory));
-    if (!mem) {
-        printf("Cannot allocate memory\n");
-        curl_easy_cleanup(handle);
-        return NULL;
-    }
+	if (!mem)
+	{
+		printf("Cannot allocate memory\n");
+		curl_easy_cleanup(handle);
+		return NULL;
+	}
 
-    mem->size = 0;
-    mem->buf = malloc(1);
-    if (!mem->buf) {
-        printf("Cannot allocate memory for buffer\n");
-        curl_easy_cleanup(handle);
-        free(mem);
-        return NULL;
-    }
+	mem->size = 0;
+	mem->buf = malloc(1);
+	if (!mem->buf)
+	{
+		printf("Cannot allocate memory for buffer\n");
+		curl_easy_cleanup(handle);
+		free(mem);
+		return NULL;
+	}
 
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, grow_buffer);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, mem);
@@ -93,79 +100,114 @@ CURL *make_handle(char *url)
 	return handle;
 }
 
-/* HREF finder implemented in libxml2 but could be any HTML parser */
-size_t follow_links(CURLM *multi_handle, memory *mem, char *url, char *domain)
+// Function to log messages (replace with your desired logging mechanism)
+void log_message(const char* message)
+{
+    printf("%s\n", message);
+}
+
+// Helper function to check if a URL is in a PHP format
+int is_php_url(const char* url)
+{
+    return strstr(url, ".php") != NULL;
+}
+
+// Helper function to check if a URL has already been crawled
+int is_already_crawled(const char* url)
+{
+	// Lock the mutex before accessing the file
+	pthread_mutex_lock(&mutex_io);
+    if (exist_webpage((char*) url))
+	{
+		// Unlock the mutex after accessing the file
+		pthread_mutex_unlock(&mutex_io);
+		return 1;
+	}
+	// Unlock the mutex after accessing the file
+	pthread_mutex_unlock(&mutex_io);
+	return 0;
+}
+
+size_t follow_links(CURLM* multi_handle, memory* mem, char* url, char* domain)
 {
     write_to_file(mem->buf, url);
     int opts = HTML_PARSE_NOBLANKS | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET;
     htmlDocPtr doc = htmlReadMemory(mem->buf, mem->size, url, NULL, opts);
-    if (!doc) {
-        printf("Cannot read memory\n");
+    if (!doc)
+    {
+        log_message("Cannot read memory");
         return 0;
     }
-	xmlChar *xpath = (xmlChar *)"//a/@href";
-	xmlXPathContextPtr context = xmlXPathNewContext(doc);
-	xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
-	xmlXPathFreeContext(context);
-	if (!result)
-		return 0;
-	xmlNodeSetPtr nodeset = result->nodesetval;
-	if (xmlXPathNodeSetIsEmpty(nodeset))
-	{
-		xmlXPathFreeObject(result);
-		return 0;
-	}
-	size_t count = 0;
-	int i;
-	for (i = 0; i < nodeset->nodeNr; i++)
-	{
-		double r = rand();
-		int x = r * nodeset->nodeNr / RAND_MAX;
-		const xmlNode *node = nodeset->nodeTab[x]->xmlChildrenNode;
-		xmlChar *href = xmlNodeListGetString(doc, node, 1);
-		if (follow_relative_links)
-		{
-			xmlChar *orig = href;
-			href = xmlBuildURI(href, (xmlChar *)url);
-			xmlFree(orig);
-		}
-		char *link = (char *)href;
-		if (!link || strlen(link) < 20)
-			continue;
-		if (!strncmp(link, "http://", 7) || !strncmp(link, "https://", 8))
-		{
-			if (is_domain(link, domain))
-			{
-				if (!exist_webpage(link))
-				{
-					if (strstr(link, ".php") == NULL)
-					{
-						curl_multi_add_handle(multi_handle, make_handle(link));
-						if (count++ == max_link_per_page)
-						{
-							break;
-						}
-					}
-					else
-					{
-						printf("Skipping \"%s\", url have a php format\n", link);
-					}
-				}
-				else
-				{
-					printf("Skipping \"%s\", url already crawled\n", link);
-				}
-			}
-			else
-			{
-				printf("Skipping %s\n", link);
-			}
-		}
-		xmlFree(link);
-	}
-	xmlXPathFreeObject(result);
+    
+    xmlChar* xpath = (xmlChar*)"//a/@href";
+    xmlXPathContextPtr context = xmlXPathNewContext(doc);
+    xmlXPathObjectPtr result = xmlXPathEvalExpression(xpath, context);
+    xmlXPathFreeContext(context);
+    
+    if (!result)
+        return 0;
+    
+    xmlNodeSetPtr nodeset = result->nodesetval;
+    if (xmlXPathNodeSetIsEmpty(nodeset))
+    {
+        xmlXPathFreeObject(result);
+        return 0;
+    }
+    
+    size_t count = 0;
+    int i;
+    for (i = 0; i < nodeset->nodeNr; i++)
+    {
+        double r = rand();
+        int x = r * nodeset->nodeNr / RAND_MAX;
+        const xmlNode* node = nodeset->nodeTab[x]->xmlChildrenNode;
+        xmlChar* href = xmlNodeListGetString(doc, node, 1);
+        
+        if (follow_relative_links)
+        {
+            xmlChar* orig = href;
+            href = xmlBuildURI(href, (xmlChar*)url);
+            xmlFree(orig);
+        }
+        
+        char* link = (char*)href;
+        if (!link || strlen(link) < 1)
+            continue;
+        
+        if (strncmp(link, "http://", 7) == 0 || strncmp(link, "https://", 8) == 0)
+        {
+            if (is_domain(link, domain))
+            {
+                if (!is_already_crawled(link))
+                {
+                    if (!is_php_url(link))
+                    {
+                        curl_multi_add_handle(multi_handle, make_handle(link));
+                        if (++count == max_link_per_page)
+                            break;
+                    }
+                    else
+                    {
+                        log_message("Skipping URL, it has a PHP format");
+                    }
+                }
+                else
+                {
+                    log_message("Skipping URL, it has already been crawled");
+                }
+            }
+            else
+            {
+                log_message("Skipping URL, it does not belong to the specified domain");
+            }
+        }
+        
+        xmlFree(link);
+    }
+    
+    xmlXPathFreeObject(result);
     xmlFreeDoc(doc);
-	return count;
+    return count;
 }
 
 int is_html(char *ctype)
@@ -176,28 +218,31 @@ int is_html(char *ctype)
 int crawl(char *url)
 {
 	char *domain = get_domain(url);
-    if (!domain) {
-        printf("Cannot get domain\n");
-        return -1;
-    }
+	if (!domain)
+	{
+		printf("Cannot get domain\n");
+		return -1;
+	}
 
-    struct sigaction action;
-    memset(&action, 0, sizeof(action));
-    action.sa_handler = sighandler;
-    if (sigaction(SIGINT, &action, NULL) < 0) {
-        printf("Cannot set signal handler\n");
-        free(domain);
-        return -1;
-    }
+	struct sigaction action;
+	memset(&action, 0, sizeof(action));
+	action.sa_handler = sighandler;
+	if (sigaction(SIGINT, &action, NULL) < 0)
+	{
+		printf("Cannot set signal handler\n");
+		free(domain);
+		return -1;
+	}
 
 	LIBXML_TEST_VERSION;
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 	CURLM *multi_handle = curl_multi_init();
-    if (!multi_handle) {
-        printf("Cannot initialize CURL multi handle\n");
-        free(domain);
-        return -1;
-    }
+	if (!multi_handle)
+	{
+		printf("Cannot initialize CURL multi handle\n");
+		free(domain);
+		return -1;
+	}
 	curl_multi_setopt(multi_handle, CURLMOPT_MAX_TOTAL_CONNECTIONS, max_con);
 	curl_multi_setopt(multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, 6L);
 
@@ -268,8 +313,8 @@ int crawl(char *url)
 	}
 	printf("Crawling %s complete\n", domain);
 	curl_multi_cleanup(multi_handle);
-    curl_global_cleanup();
-    free(domain);
-    return 0;
+	curl_global_cleanup();
+	free(domain);
+	return 0;
 	return 0;
 }
