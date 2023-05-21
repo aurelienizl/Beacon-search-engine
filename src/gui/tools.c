@@ -110,4 +110,3 @@ gint64 folder_count(gchar* folderPath)
     closedir(dir);
     return count;
 }
-

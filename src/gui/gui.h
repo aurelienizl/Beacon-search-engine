@@ -6,6 +6,9 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <curl/curl.h>
 
 #ifndef DT_DIR
 #define DT_DIR 4

@@ -276,6 +276,7 @@ int main(int argc, char *argv[]) {
     gtk_text_buffer_set_text(databaseInfo, "DB :  /home/aurelien/Desktop/Epita/Project.db\nDB Size : 230 MB", -1);
 
     infoText = gtk_text_view_new_with_buffer(databaseInfo);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(infoText), FALSE);
     gtk_fixed_put(GTK_FIXED(fixed), infoText, 0, 700);
 
     engineNameImage = gtk_image_new_from_file("interface/img/image.png");
