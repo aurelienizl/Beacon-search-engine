@@ -1,123 +1,88 @@
-#include <sdtdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "lexicon.h"
 
-#include "libstemmer.h"
-
-#define maxword 50
-#define tablesize 
-
-struct hash_table
-{
-	unsigned long key; 
-	void *value; 
+void normalize(char *word) {
+    for (int i = 0; word[i] != '\0'; i++) {
+        word[i] = tolower(word[i]);
+    }
 }
 
-unsigned long hash_function(unsigned char *word)
+char* removeSpecialChars(char* str) 
 {
-	unsigned long hash = 5381;
-	int c; 
-	
-	while(c = *word++)
-	{
-		hash = ((hash << 5) + hash) + c;
-	}
-	
-	return hash;
+  int length = strlen(str);
+  char* result = (char*) malloc((length + 1) * sizeof(char)); 
+
+  int j = 0;
+  for (int i = 0; i < length; i++) 
+  {
+    if (isalnum(str[i])) 
+    { 
+      result[j++] = str[i]; 
+    }
+  }
+
+  result[j] = '\0'; 
+  return result;
 }
 
-char *get_stem(char *word)
+char *get_stem(char *word) 
 {
-	struct sb_stemmer *stemmer = sb_stemmer_new("english", NULL);
-	if(stemmer == NULL)
-	{
-		printf("failed to create stemmer\n");
-		return NULL;
-	}
+    char* newword = removeSpecialChars(word);
 
-	char *res = malloc(sizeof(char) * maxword);
-	if(res == NULL)
-	{
-		printf("could not allocate memory for word\n");
-		sb_stemmer_delete(stemmer);
-		return NULL;
-	}
+    struct sb_stemmer *stemmer = sb_stemmer_new("english", NULL);
+    if (!stemmer) {
+        fprintf(stderr, "Error creating stemmer.\n");
+        return NULL;
+    }
+    char *stemmed_word = (char *) malloc(sizeof(char) * (strlen(newword) + 1));
+    if (!stemmed_word) {
+        fprintf(stderr, "Error allocating memory for stemmed word.\n");
+        sb_stemmer_delete(stemmer);
+        return NULL;
+    }
+    const sb_symbol* stemmed = sb_stemmer_stem(stemmer, (unsigned char *) newword, strlen(newword));
+    if (stemmed_word == NULL) {
+        fprintf(stderr, "Error stemming word '%s'.\n", newword);
+        free(stemmed_word);
+        sb_stemmer_delete(stemmer);
+        return NULL;
+    }
 
-	int newlen = sb_stemmer_stem(stemmer, word, len(word), res, maxword);
-	if(newlen < 0)
-	{
-		printf("could not stem the word\n");
-		free(res);
-		sb_stemmer_delete(stemmer);
-		return NULL;
-	}
+	strcpy(stemmed_word, (char *)stemmed);
 
-	res[newlen] = '\0';
-	sb_stemmer_delete(stemmer);
-
-	return res;
+    sb_stemmer_delete(stemmer);
+    return stemmed_word;
 }
 
-/*
-int check_vowel(char c)
-{
-	int res = (c == 'a'||c == 'e'||c == 'u');
-	res = (res||c == 'u'||c == 'i'||c == 'i');
-	return res;
-}
+int check_word(char *word) {
+  struct sb_stemmer *stemmer = sb_stemmer_new("english", 0);
+  if (!stemmer) {
+    printf("Error creating stemmer\n");
+    return 1;
+  }
+  
+  const char *stop_words[] = {"a", "an", "the", "and", "but", "or", "not", "in", "on", "at", "to", "of", "for", "with", "by", "from", "as", "is", "am", "are", "was", "were", "be", "been", "being", "this", "that", "these", "those", "which", "who", "whom", "whose", "where", "when", "why", "how", "all", "any", "both", "each", "every", "few", "many", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"};
+  int num_stop_words = sizeof(stop_words) / sizeof(stop_words[0]);
+  
+  int word_length = strlen(word);
+  sb_symbol *stemmed_word = sb_stemmer_stem(stemmer, (const sb_symbol *)word, word_length);
+  if (!stemmed_word) {
+    printf("Error stemming word\n");
+    return 1;
+  }
+  
+  int is_stop_word = 0;
+  for (int i = 0; i < num_stop_words; i++) {
+    if (strcmp(stop_words[i], (const char *)stemmed_word) == 0) {
+      is_stop_word = 1;
+      break;
+    }
+  }
+  
+  sb_stemmer_delete(stemmer);
 
-int syl_num(char *word)
-{
-	int i = 0;
-	int res = 0;
-
-	if(word[i] != '\0')
-	{
-		if(check_vowel(word[i]))
-		{
-			res++;
-		}
-	}
-	i++;
-
-	while(word[i] != '\0')
-	{
-		if(check_vowel(word[i]) &&
-				!check_vowel(word[i - 1]))
-		{
-			res++;
-		}
-		i++;
-	}
-
-	return res;
-}
-
-void replace_suff(char *word, char *suff, char *replacement)
-{
-	int wlen = strlen(word);
-	int slen = strlen(suff);
-	int rlen = strlen(replacement);
-
-	if(slen > wlen)
-		return;
-
-	if(strcmp(word + wlen - slen, suff$) == 0)
-	{
-		strcpy(word + wlen - slen, replacement);
-		strcpy(word + wlen - slen + rlen, "");
-	}
-}
-*/
-
-
-unsigned long computeid(char *word)
-{
-	return hash_function((unsigned char *)get_stem(word));
-}
-
-int update_lexicon(char *word)
-{
-	unsigned long key = computeid(word);
-
+  if (is_stop_word) {
+    return 1;
+  } else {
+    return 0;
+  }  
 }
