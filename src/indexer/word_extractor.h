@@ -11,8 +11,8 @@
 #include <libxml/HTMLparser.h>
 #include <sqlite3.h>
 #include <unistd.h>
-#include "../database/store_server.h"
 #include "lexicon.h"
+#include "../crawler/crawler.h"
 
 #define MAX_WORD_LEN 100
 #define MAX_URL_LEN 512
@@ -23,6 +23,8 @@ typedef struct word_info {
     struct list* positions;
 } word_info_t;
 
+
+char* sha1_hash(const unsigned char *data, size_t len);
 int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path);
 int is_word_char(char c);
 void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos);

@@ -1,11 +1,24 @@
 #include "word_extractor.h"
 
+char* sha1_hash(const unsigned char *data, size_t len)
+{
+    unsigned char digest[SHA_DIGEST_LENGTH];
+    SHA1(data, len, digest);
+    char *sha1string = (char *)malloc(SHA_DIGEST_LENGTH * 2 + 1);
+    for (int i = 0; i < SHA_DIGEST_LENGTH; i++)
+    {
+        sprintf(&sha1string[i * 2], "%02x", (unsigned int)digest[i]);
+    }
+    sha1string[SHA_DIGEST_LENGTH * 2] = '\0';
+    return sha1string;
+}
+
 int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path) {
     sqlite3* db;
     char* err_msg = 0;
 
-    //check if database already exists
-    if(access(db_path, F_OK) == 0)
+    // Check if database already exists
+    if (access(db_path, F_OK) == 0)
     {
         printf("The word Database for this page already exists\n");
         return 0;
@@ -20,7 +33,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     }
 
     // Create the words table
-    char* create_words_sql = "CREATE TABLE IF NOT EXISTS words (word TEXT PRIMARY KEY, count INT);";
+    const char* create_words_sql = "CREATE TABLE IF NOT EXISTS words (word TEXT PRIMARY KEY, count INT);";
     rc = sqlite3_exec(db, create_words_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create words table: %s\n", err_msg);
@@ -30,8 +43,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     }
 
     // Create the positions table
-    char create_positions_sql[1024];
-    sprintf(create_positions_sql, "CREATE TABLE IF NOT EXISTS positions (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));");
+    const char* create_positions_sql = "CREATE TABLE IF NOT EXISTS positions (word TEXT, position INT, FOREIGN KEY(word) REFERENCES words(word));";
     rc = sqlite3_exec(db, create_positions_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create positions table: %s\n", err_msg);
@@ -41,8 +53,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     }
 
     // Create anchor table 
-    char create_anchor_sql[1024];
-    sprintf(create_anchor_sql, "CREATE TABLE IF NOT EXISTS anchor (url TEXT);");
+    const char* create_anchor_sql = "CREATE TABLE IF NOT EXISTS anchor (url TEXT);";
     rc = sqlite3_exec(db, create_anchor_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create anchor table: %s\n", err_msg);
@@ -51,50 +62,116 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
         return 1;
     }
 
-    // Insertions
-    sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
-    
-    // Insert the info into the anchor table
-    char insert_info_sql[1024];
-        sprintf(insert_info_sql, "INSERT INTO anchor (url) VALUES ('%s');", url);
-        rc = sqlite3_exec(db, insert_info_sql, 0, 0, &err_msg);
-        if (rc != SQLITE_OK) {
-            fprintf(stderr, "Failed to insert word into words table: %s\n", err_msg);
-            sqlite3_free(err_msg);
-            sqlite3_close(db);
-            return 1;
-        }
+    // Prepare the INSERT statements
+    const char* insert_info_sql = "INSERT INTO anchor (url) VALUES (?);";
+    sqlite3_stmt* insert_info_stmt;
+    rc = sqlite3_prepare_v2(db, insert_info_sql, -1, &insert_info_stmt, 0);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare anchor insert statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_info_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
 
+    const char* insert_words_sql = "INSERT INTO words (word, count) VALUES (?, ?);";
+    sqlite3_stmt* insert_words_stmt;
+    rc = sqlite3_prepare_v2(db, insert_words_sql, -1, &insert_words_stmt, 0);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare words insert statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_words_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    const char* insert_positions_sql = "INSERT INTO positions (word, position) VALUES (?, ?);";
+    sqlite3_stmt* insert_positions_stmt;
+    rc = sqlite3_prepare_v2(db, insert_positions_sql, -1, &insert_positions_stmt, 0);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to prepare positions insert statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_positions_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    // Begin the transaction
+    sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
+
+    // Bind and execute the INSERT statements
+    rc = sqlite3_bind_text(insert_info_stmt, 1, url, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to bind URL parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_info_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+    rc = sqlite3_step(insert_info_stmt);
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Failed to insert URL into anchor table: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_info_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+    sqlite3_reset(insert_info_stmt);
 
     for (int i = 0; i < word_count; i++) {
-        // Insert the word count into the words table
-        char insert_words_sql[1024];
-        sprintf(insert_words_sql, "INSERT INTO words (word, count) VALUES ('%s', %d);", word_list[i].word, word_list[i].count);
-        rc = sqlite3_exec(db, insert_words_sql, 0, 0, &err_msg);
+        rc = sqlite3_bind_text(insert_words_stmt, 1, word_list[i].word, -1, SQLITE_STATIC);
         if (rc != SQLITE_OK) {
-            fprintf(stderr, "Failed to insert word into words table: %s\n", err_msg);
-            sqlite3_free(err_msg);
+            fprintf(stderr, "Failed to bind word parameter: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(insert_words_stmt);
             sqlite3_close(db);
             return 1;
         }
+        rc = sqlite3_bind_int(insert_words_stmt, 2, word_list[i].count);
+        if (rc != SQLITE_OK) {
+            fprintf(stderr, "Failed to bind count parameter: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(insert_words_stmt);
+            sqlite3_close(db);
+            return 1;
+        }
+        rc = sqlite3_step(insert_words_stmt);
+        if (rc != SQLITE_DONE) {
+            fprintf(stderr, "Failed to insert word into words table: %s\n", sqlite3_errmsg(db));
+            sqlite3_finalize(insert_words_stmt);
+            sqlite3_close(db);
+            return 1;
+        }
+        sqlite3_reset(insert_words_stmt);
 
-        // Insert the positions into the positions table
         struct list* current = word_list[i].positions->next;
-        while (current != NULL) {
-            int position = *((int*)current->data);
-            char insert_positions_sql[1024];
-            sprintf(insert_positions_sql, "INSERT INTO positions (word, position) VALUES ('%s', %d);", word_list[i].word, position);
-            rc = sqlite3_exec(db, insert_positions_sql, 0, 0, &err_msg);
+        while (current != NULL && current->data != NULL) {
+            rc = sqlite3_bind_text(insert_positions_stmt, 1, word_list[i].word, -1, SQLITE_STATIC);
             if (rc != SQLITE_OK) {
-                fprintf(stderr, "Failed to insert position into positions table: %s\n", err_msg);
-                sqlite3_free(err_msg);
+                fprintf(stderr, "Failed to bind word parameter: %s\n", sqlite3_errmsg(db));
+                sqlite3_finalize(insert_positions_stmt);
                 sqlite3_close(db);
                 return 1;
             }
+            rc = sqlite3_bind_int(insert_positions_stmt, 2, *((int*)current->data));
+            if (rc != SQLITE_OK) {
+                fprintf(stderr, "Failed to bind position parameter: %s\n", sqlite3_errmsg(db));
+                sqlite3_finalize(insert_positions_stmt);
+                sqlite3_close(db);
+                return 1;
+            }
+            rc = sqlite3_step(insert_positions_stmt);
+            if (rc != SQLITE_DONE) {
+                fprintf(stderr, "Failed to insert position into positions table: %s\n", sqlite3_errmsg(db));
+                sqlite3_finalize(insert_positions_stmt);
+                sqlite3_close(db);
+                return 1;
+            }
+            sqlite3_reset(insert_positions_stmt);
             current = current->next;
         }
     }
+
+    // Commit the transaction
     sqlite3_exec(db, "COMMIT TRANSACTION", 0, 0, 0);
+
+    // Finalize the prepared statements
+    sqlite3_finalize(insert_info_stmt);
+    sqlite3_finalize(insert_words_stmt);
+    sqlite3_finalize(insert_positions_stmt);
 
     // Close the database connection
     sqlite3_close(db);
@@ -108,10 +185,15 @@ int is_word_char(char c) {
 
 void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos)
 {
-    char *p_start = NULL;
-    char *p_end = NULL;
-    char *word_start = NULL;
-    char *word_end = NULL;
+    if (html_content == NULL || word_list == NULL || word_count == NULL || pos == NULL) {
+        // Handle null pointers appropriately
+        return;
+    }
+
+    char* p_start = NULL;
+    char* p_end = NULL;
+    char* word_start = NULL;
+    char* word_end = NULL;
 
     // Find the first <p> tag
     p_start = strstr(html_content, "<p>");
@@ -128,8 +210,6 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
         word_start = strstr(p_start, ">") + 1;
         
         // Loop over all words inside the <p> tag
-        char* word = calloc(MAX_WORD_LEN, sizeof(char));
-        
         while (word_start < p_end) {
             // Find the end of the current word
             word_end = word_start;
@@ -137,15 +217,13 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
                 word_end++;
             }
             
-            // Copy the current word to the words array
-            if (word_end > word_start) 
-            {
-                
+            // Copy the current word to a separate variable
+            if (word_end > word_start) {
+                char word[MAX_WORD_LEN];
                 int word_len = word_end - word_start;
                 if (word_len >= MAX_WORD_LEN) {
                     word_len = MAX_WORD_LEN - 1;
                 }
-
                 strncpy(word, word_start, word_len);
                 word[word_len] = '\0';
                 
@@ -154,22 +232,19 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
 
                 normalize(word);
                 
-                if(check_word(word))
-                {
-                    while (!is_word_char(*word_end) && word_end < p_end) 
-                    {
+                if (check_word(word)) {
+                    while (!is_word_char(*word_end) && word_end < p_end) {
                         word_end++;
                     }
                     word_start = word_end;
                     continue;
                 }
                 
-                word = get_stem(word);
+                char* stemmed_word = get_stem(word);
                 int i = 0;
                 for (i = 0; i < *word_count; i++) {
-                    if (strcmp((*word_list)[i].word, word) == 0) {
+                    if (strcmp((*word_list)[i].word, stemmed_word) == 0) {
                         (*word_list)[i].count++;
-                        //printf("updated %s, count %d, position, %d\n", word, (*word_list)[i].count, *pos);
                         int* data = calloc(1, sizeof(int));
                         *data = *pos;
                         struct list* position = new_element(data);
@@ -180,9 +255,8 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
 
                 // If the word doesn't exist in the list, add it
                 if (i == *word_count) {
-                    //printf("found %s, count %d, position %d\n", word, 1, *pos);
                     *word_list = realloc(*word_list, (*word_count + 1) * sizeof(word_info_t));
-                    strncpy((*word_list)[*word_count].word, word, MAX_WORD_LEN);
+                    strncpy((*word_list)[*word_count].word, stemmed_word, MAX_WORD_LEN);
                     (*word_list)[*word_count].count = 1;
                     (*word_list)[*word_count].positions = new_list();
                     int* data = calloc(1, sizeof(int));
@@ -191,18 +265,17 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
                     add_top((*word_list)[*word_count].positions, position);
                     (*word_count)++;
                 }
+
+                free(stemmed_word);
             }
             
             // Find the start of the next word
             while (!is_word_char(*word_end) && word_end < p_end) {
-                if((*word_end) == '<')
-                {
+                if ((*word_end) == '<') {
                     word_end++;
-                    while ((*word_end) != '>' && word_end < p_end) 
-                    {
+                    while ((*word_end) != '>' && word_end < p_end) {
                         word_end++;
                     }
-                    //continue;
                 }
                 word_end++;
             }
@@ -215,6 +288,7 @@ void extract_words(char* html_content, word_info_t** word_list, int* word_count,
 }
 
 int get_words(char* url, char* html_content) {
+    printf("GETTING WORDS\n");
 
     word_info_t* word_list = NULL;
     int word_count = 0;
@@ -228,8 +302,7 @@ int get_words(char* url, char* html_content) {
     for (int i = 0; i < word_count; i++) {
         printf("%s\t%d\n", word_list[i].word, word_list[i].count);
         struct list* current = word_list[i].positions->next;
-        while(current != NULL)
-        {
+        while (current != NULL && current->data != NULL) {
             printf("%d ", *((int*)current->data));
             current = current->next;
         }
@@ -237,14 +310,16 @@ int get_words(char* url, char* html_content) {
     }
 
     char* directory = calloc(265, sizeof(char));
-    char* checksum = sha1_hash((const unsigned char *) url, strlen(url)); 
+    char* checksum = sha1_hash((const unsigned char *)url, strlen(url)); 
     strcpy(directory, "../barrels/");
     strcat(directory, checksum);
     strcat(directory, ".db");
-    create_database(word_list, url, word_count, (const char *)directory);
+    create_database(word_list, url, word_count, (const char*)directory);
 
     // Clean up
+    
     free(word_list);
+    free(directory);
 
     return 0;
 }

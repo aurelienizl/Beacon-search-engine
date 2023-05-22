@@ -83,13 +83,8 @@ struct chunk** extractWords(const char* query, int* chunkCount) {
     return result;
 }
 
-struct chunk** get_query(int* num) {
-    char query[MAX_QUERY_LENGTH];
-
-    printf("Enter a query: ");
-    fgets(query, sizeof(query), stdin);
-    query[strcspn(query, "\n")] = '\0';  // Remove trailing newline if present
-
+struct chunk** get_query(char** query, int* num) 
+{
     int wordCount;
     struct chunk** words = extractWords(query, &wordCount);
 
