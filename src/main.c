@@ -1,6 +1,5 @@
-// BASED ON : https://curl.se/libcurl/c/crawler.html
-
 #include "crawler/crawler.h"
+<<<<<<< HEAD
 #include "database/store_server.h"
 #include "structures/string/string.h"
 #include "structures/stack/stack.h"
@@ -132,83 +131,12 @@ int is_html(char *ctype)
 {
   return ctype != NULL && strlen(ctype) > 10 && strstr(ctype, "text/html");
 }
+=======
+>>>>>>> b909e130dcde3a589c2f8968207cb124de890867
 
 int main(void)
 {
-  signal(SIGINT, sighandler);
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  CURLM *multi_handle = curl_multi_init();
-  curl_multi_setopt(multi_handle, CURLMOPT_MAX_TOTAL_CONNECTIONS, max_con);
-  curl_multi_setopt(multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, 6L);
-
-  /* enables http/2 if available */
-#ifdef CURLPIPE_MULTIPLEX
-  curl_multi_setopt(multi_handle, CURLMOPT_PIPELINING, CURLPIPE_MULTIPLEX);
-#endif
-
-  /* sets html start page */
-  curl_multi_add_handle(multi_handle, make_handle(start_page));
-
-  int msgs_left;
-  int pending = 0;
-  int complete = 0;
-  int still_running = 1;
-  while (still_running && !pending_interrupt)
-  {
-    int numfds;
-    curl_multi_wait(multi_handle, NULL, 0, 1000, &numfds);
-    curl_multi_perform(multi_handle, &still_running);
-
-    /* See how the transfers went */
-    CURLMsg *m = NULL;
-    while ((m = curl_multi_info_read(multi_handle, &msgs_left)))
-    {
-      if (m->msg == CURLMSG_DONE)
-      {
-        CURL *handle = m->easy_handle;
-        char *url;
-        memory *mem;
-        curl_easy_getinfo(handle, CURLINFO_PRIVATE, &mem);
-        curl_easy_getinfo(handle, CURLINFO_EFFECTIVE_URL, &url);
-        if (m->data.result == CURLE_OK)
-        {
-          long res_status;
-          curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &res_status);
-          if (res_status == 200)
-          {
-            char *ctype;
-            curl_easy_getinfo(handle, CURLINFO_CONTENT_TYPE, &ctype);
-            printf("[%d] HTTP 200 (%s): %s\n", complete, ctype, url);
-            if (is_html(ctype) && mem->size > 100)
-            {
-              if (pending < max_requests && (complete + pending) < max_total)
-              {
-                pending += follow_links(multi_handle, mem, url);
-                still_running = 1;
-              }
-            }
-          }
-          else
-          {
-            printf("[%d] HTTP %d: %s\n", complete, (int)res_status, url);
-          }
-        }
-        else
-        {
-          printf("[%d] Connection failure: %s\n", complete, url);
-        }
-        curl_multi_remove_handle(multi_handle, handle);
-        curl_easy_cleanup(handle);
-        free(mem->buf);
-        free(mem);
-        complete++;
-        pending--;
-      }
-    }
-  }
-  printf("Website entirely crawled!\n");
-  printf("Exiting...\n");
-  curl_multi_cleanup(multi_handle);
-  curl_global_cleanup();
-  return 0;
+	char *url = "https://fr.manpages.org/";
+	crawl(url);
+	return 0;
 }

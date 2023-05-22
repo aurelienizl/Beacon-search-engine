@@ -1,22 +1,26 @@
 CC ?= gcc
-PKGCONFIG = $(shell which pkg-config)
-CFLAGS = $(shell $(PKGCONFIG) --cflags gtk+-3.0) -Wall -Wextra -rdynamic
-LIBS = $(shell $(PKGCONFIG) --libs gtk+-3.0)
+PKGCONFIG ?= $(shell which pkg-config)
+CFLAGS := $(shell $(PKGCONFIG) --cflags gtk+-3.0 libcurl libxml-2.0) -Wall -Wextra -rdynamic -MMD -MP -Wno-unknown-pragmas 
+LIBS := $(shell $(PKGCONFIG) --libs gtk+-3.0 libcurl libxml-2.0) -lssl -lcrypto
 
-SRC = gui.c signals.c tools.c searcher.c
+SRC := gui.c tools.c search_form.c ../crawler/crawler.c ../crawler/tools.c
+OBJS := $(SRC:.c=.o)
+DEPS := $(OBJS:.o=.d)
 
-OBJS = $(SRC:.c=.o)
+-include $(DEPS)
 
 all: exampleapp
 
 %.o: %.c
-	$(CC) -c -o $(@F) $(CFLAGS) $<
+	$(CC) -c -o $@ $(CFLAGS) $<
 
 exampleapp: $(OBJS)
-	$(CC) -o $(@F) $(OBJS) $(LIBS) -rdynamic
+	$(CC) -o $@ $(OBJS) $(LIBS) 
+
+run: exampleapp
 	./exampleapp
-	make clean
 
 clean:
-	rm -f $(OBJS)
-	rm -f exampleapp
+	rm -f $(OBJS) $(DEPS) exampleapp
+
+.PHONY: all run clean

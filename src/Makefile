@@ -1,9 +1,13 @@
-# Makefile
+CC ?= gcc
+PKGCONFIG ?= $(shell which pkg-config)
+CFLAGS := $(shell $(PKGCONFIG) --cflags gtk+-3.0 libcurl libxml-2.0) -Wall -Wextra -rdynamic -MMD -MP -Wno-unknown-pragmas 
+LIBS := $(shell $(PKGCONFIG) --libs gtk+-3.0 libcurl libxml-2.0) -lssl -lcrypto
 
-# Compiler settings
-CC := gcc
-CFLAGS := -Wall -Wextra -std=c99 -D_DEFAULT_SOURCE -g
+SRC := gui/gui.c gui/tools.c gui/search_form.c
+OBJS := $(SRC:.c=.o)
+DEPS := $(OBJS:.o=.d)
 
+<<<<<<< HEAD
 # Library paths
 ZLIB_LIB := -lz -lcurl
 OPENSSL_LIB := -lcrypto
@@ -19,18 +23,30 @@ SRC := crawler/crawler.c database/store_server.c structures/string/operations.c 
 structures/stack/operations.c structures/stack/properties.c structures/lists/linked-list/operations.c indexer/link_extractor.c indexer/word_extractor.c
 # Object files
 OBJ := $(SRC:.c=.o)
+=======
+-include $(DEPS)
 
-# Output binary
-BIN := program
+all: exampleapp
+>>>>>>> b909e130dcde3a589c2f8968207cb124de890867
 
-all: $(BIN)
+%.o: %.c
+	$(CC) -c -o $@ $(CFLAGS) $<
 
+<<<<<<< HEAD
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) $(CURL_LIB) $(ZLIB_LIB) $(OPENSSL_LIB) $(XML_LIB) $(SQL_LIB) -o $(BIN)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(XML2_INC) $(INCLUDES) -c $< -o $@
+=======
+exampleapp: $(OBJS)
+	$(CC) -o $@ $(OBJS) $(LIBS) 
+
+run: exampleapp
+	./exampleapp
+>>>>>>> b909e130dcde3a589c2f8968207cb124de890867
 
 clean:
-	rm -f $(OBJ) $(BIN)
-	rm -r db
+	rm -f $(OBJS) $(DEPS) exampleapp
+
+.PHONY: all run clean

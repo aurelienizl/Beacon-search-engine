@@ -1,59 +1,30 @@
-/*
- * Author: Izoulet Aurélien
- * Purpose: GUI Hermes implementation
- * Language: C.
- */
-
 #ifndef _GUI_H_
 #define _GUI_H_
 
 #include <gtk/gtk.h>
+#include <sys/stat.h>  
+#include <dirent.h>
+#include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <curl/curl.h>
 
-// Contains all signals from the main gui window. 
+#include "../crawler/crawler.h"
 
-/**
-** @brief             Signals handlers methods. 
-** @param widget      Widget that triggered the signal. 
-** @param userdata    Current userdata.
-** @return            Void.
-*/
 
-void on_buttonSave_activate(GtkWidget *widget, gpointer *userdata);
+#ifndef DT_DIR
+#define DT_DIR 4
+#endif
 
-void on_buttonReload_activate(GtkWidget *widget, gpointer *userdata);
+gchar *open_folder();
 
-void on_buttonExit_activate(GtkWidget *widget, gpointer *userdata);
+gint64 get_folder_size(gchar *folder_name);
 
-void on_buttonOpenDB_activate(GtkWidget *widget, gpointer *userdata);
+gint64 folder_count(gchar* folderPath);
 
-void on_buttonUpdateDB_activate(GtkWidget *widget, gpointer *userdata);
+int launch_searcher(const gchar* request);
 
-void on_buttonRepairDB_activate(GtkWidget *widget, gpointer *userdata);
-
-void on_buttonThreads_activate(GtkWidget *widget, gpointer *userdata);
-
-void on_buttonTimeout_activate(GtkWidget *widget, gpointer *userdata);
-
-void on_buttonInternetStatus_activate(GtkWidget *widget, gpointer *userdata);
-
-void on_buttonProjectTeam_activate(GtkWidget *widget, gpointer *userdata);
-
-void on_buttonWebsite_activate(GtkWidget *widget, gpointer *userdata);
- 
-void on_inputSearch_activate(GtkWidget *widget, gpointer *userdata);
-
-// Contains all tools used by the main gui window. 
-
-/**
-** @brief             Open a dialog and override current database path. 
-** @return            Void.
-*/
-
-void open_db();
-
-// Contains all methods used by the search engine.
-
-void display_new_form(char* text);
+char* get_public_ip();
 
 #endif  
