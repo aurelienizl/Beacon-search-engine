@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <curl/curl.h>
 
+#include "../crawler/crawler.h"
+
+
 #ifndef DT_DIR
 #define DT_DIR 4
 #endif
@@ -19,5 +22,9 @@ gchar *open_folder();
 gint64 get_folder_size(gchar *folder_name);
 
 gint64 folder_count(gchar* folderPath);
+
+int launch_searcher(const gchar* request);
+
+char* get_public_ip();
 
 #endif  

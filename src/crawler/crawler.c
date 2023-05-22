@@ -1,8 +1,10 @@
 #include "crawler.h"
 #include <signal.h>
 
-int max_con = 200;
-int max_total = 200000;
+#pragma region Parameters
+
+int max_con = 20;
+int max_total = 20000;
 int max_requests = 5000;
 size_t max_link_per_page = 50;
 int follow_relative_links = 1;
@@ -11,18 +13,15 @@ volatile sig_atomic_t pending_interrupt = 0;
 
 pthread_mutex_t mutex_io = PTHREAD_MUTEX_INITIALIZER;
 
+#pragma endregion Parameters
+
+#pragma region Crawler
+
 void sighandler(int dummy)
 {
 	printf("Interrupted %i\n", dummy);
 	pending_interrupt = 1;
 }
-
-/* resizable buffer */
-typedef struct
-{
-	char *buf;
-	size_t size;
-} memory;
 
 size_t grow_buffer(void *contents, size_t sz, size_t nmemb, void *ctx)
 {
@@ -91,7 +90,7 @@ CURL *make_handle(char *url)
 	curl_easy_setopt(handle, CURLOPT_CONNECTTIMEOUT, 2L);
 	curl_easy_setopt(handle, CURLOPT_COOKIEFILE, "");
 	curl_easy_setopt(handle, CURLOPT_FILETIME, 1L);
-	curl_easy_setopt(handle, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0");
+	curl_easy_setopt(handle, CURLOPT_USERAGENT, "Googlebot/2.1 (+http://www.google.com/bot.html)");
 	curl_easy_setopt(handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
 	curl_easy_setopt(handle, CURLOPT_UNRESTRICTED_AUTH, 1L);
 	curl_easy_setopt(handle, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
@@ -100,19 +99,16 @@ CURL *make_handle(char *url)
 	return handle;
 }
 
-// Function to log messages (replace with your desired logging mechanism)
 void log_message(const char* message)
 {
     printf("%s\n", message);
 }
 
-// Helper function to check if a URL is in a PHP format
 int is_php_url(const char* url)
 {
     return strstr(url, ".php") != NULL;
 }
 
-// Helper function to check if a URL has already been crawled
 int is_already_crawled(const char* url)
 {
 	// Lock the mutex before accessing the file
@@ -130,7 +126,7 @@ int is_already_crawled(const char* url)
 
 size_t follow_links(CURLM* multi_handle, memory* mem, char* url, char* domain)
 {
-    write_to_file(mem->buf, url);
+    write_html_to_file(mem->buf, url);
     int opts = HTML_PARSE_NOBLANKS | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET;
     htmlDocPtr doc = htmlReadMemory(mem->buf, mem->size, url, NULL, opts);
     if (!doc)
@@ -204,7 +200,6 @@ size_t follow_links(CURLM* multi_handle, memory* mem, char* url, char* domain)
         
         xmlFree(link);
     }
-    
     xmlXPathFreeObject(result);
     xmlFreeDoc(doc);
     return count;
@@ -215,13 +210,14 @@ int is_html(char *ctype)
 	return ctype != NULL && strlen(ctype) > 10 && strstr(ctype, "text/html");
 }
 
-int crawl(char *url)
+void* crawl(void *url_void)
 {
+	char* url = (char*) url_void;
 	char *domain = get_domain(url);
 	if (!domain)
 	{
 		printf("Cannot get domain\n");
-		return -1;
+		return NULL;
 	}
 
 	struct sigaction action;
@@ -231,7 +227,7 @@ int crawl(char *url)
 	{
 		printf("Cannot set signal handler\n");
 		free(domain);
-		return -1;
+		return NULL;
 	}
 
 	LIBXML_TEST_VERSION;
@@ -241,7 +237,7 @@ int crawl(char *url)
 	{
 		printf("Cannot initialize CURL multi handle\n");
 		free(domain);
-		return -1;
+		return NULL;
 	}
 	curl_multi_setopt(multi_handle, CURLMOPT_MAX_TOTAL_CONNECTIONS, max_con);
 	curl_multi_setopt(multi_handle, CURLMOPT_MAX_HOST_CONNECTIONS, 6L);
@@ -315,6 +311,140 @@ int crawl(char *url)
 	curl_multi_cleanup(multi_handle);
 	curl_global_cleanup();
 	free(domain);
-	return 0;
-	return 0;
+	xmlCleanupParser();
+	return NULL;
 }
+
+#pragma endregion Crawler
+
+#pragma region UrlOperations
+
+int is_domain(const char *url, const char *domain)
+{
+    if (url == NULL || domain == NULL) {
+        return 0;
+    }
+    return (strstr(url, domain) != NULL) ? 1 : 0;
+}
+
+char *get_domain(const char *link)
+{
+    if (link == NULL) {
+        return NULL;
+    }
+
+    // Check if link starts with "http" or "https"
+    if (strncasecmp(link, "http", 4) != 0) {
+        return NULL;
+    }
+
+    size_t i = (link[4] == 's') ? 5 : 4;
+    if (link[i] != ':' || link[i + 1] != '/' || link[i + 2] != '/') {
+        return NULL;
+    }
+
+    i += 3;  // Skip "://"
+    const char *domain_start = &link[i];
+    const char *slash = strchr(domain_start, '/');
+
+    size_t domain_len = (slash != NULL) ? (size_t)(slash - domain_start) : strlen(domain_start);
+    char *domain = (char *)malloc(sizeof(char) * (domain_len + 1));
+
+    if (domain != NULL) {
+        strncpy(domain, domain_start, domain_len);
+        domain[domain_len] = '\0';
+    }
+
+    return domain;
+}
+
+#pragma endregion UrlOperations
+
+#pragma region FileOperations
+
+void rek_mkdir(char *path)
+{
+    char *sep = strrchr(path, '/');
+    if (sep != NULL)
+    {
+        *sep = 0;
+        rek_mkdir(path);
+        *sep = '/';
+    }
+    if (mkdir(path, 0777) && errno != EEXIST)
+        printf("error while trying to create '%s'\n%m\n", path);
+}
+
+void create_directory(char *url)
+{
+    char *db_directory = string_to_heap("db/");
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
+    char *path = string_concat(db_directory, folder_name);
+
+    rek_mkdir(path);
+
+    free(folder_name);
+    free(path);
+    
+}
+
+void write_to_path(char* path, char* data)
+{
+    FILE *fp = fopen(path, "w");
+    if (fp == NULL)
+    {
+        printf("Failed to open file %s\n", path);
+        return;
+    }
+
+    fprintf(fp, "%s", data);
+    fclose(fp);
+}
+
+int write_html_to_file(char* data, char* url)
+{
+    char *db_directory = string_to_heap("db/");
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
+    char *path = string_concat(db_directory, folder_name);
+    char *filename = string_concat(path, "/index.html");
+
+    create_directory(url);
+    
+    write_to_path(filename, data);
+
+    free(db_directory);
+    free(folder_name);
+    free(path);
+    free(filename);
+    return 1;
+}
+
+int exist_webpage(char *url)
+{
+    char *db_directory = string_to_heap("db/");
+    //char *folder_name = sha1_hash((const unsigned char *)url, strlen(url));
+    char *folder_name = base64_encode(url);
+    char *path = string_concat(db_directory, folder_name);
+
+    DIR *dir = opendir(path);
+    if (dir)
+    {
+        free(path);
+        free(db_directory);
+        free(folder_name);
+        closedir(dir);
+        return 1;
+    }
+    else
+    {
+        free(path);
+        free(db_directory);
+        free(folder_name);
+        closedir(dir);
+        return 0;
+    }
+}
+
+#pragma endregion FileOperations

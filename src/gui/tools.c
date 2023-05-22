@@ -110,3 +110,47 @@ gint64 folder_count(gchar* folderPath)
     closedir(dir);
     return count;
 }
+
+#pragma region IP_Address
+
+size_t callbackfunc(void* data, size_t size, size_t nmemb, char** response) {
+    size_t total_size = size * nmemb;
+    *response = malloc(total_size + 1);
+    if (*response) {
+        memcpy(*response, data, total_size);
+        (*response)[total_size] = '\0';
+    }
+    return total_size;
+}
+
+char* get_public_ip() {
+    CURL* curl;
+    CURLcode res;
+    char* response = NULL;
+    
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, "https://api.ipify.org");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callbackfunc);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        
+        res = curl_easy_perform(curl);
+        
+        if(res != CURLE_OK) {
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            return NULL;    
+        }
+        
+        curl_easy_cleanup(curl);
+    }
+    
+    curl_global_cleanup();
+    
+    return response;
+}
+
+#pragma endregion IP_Address

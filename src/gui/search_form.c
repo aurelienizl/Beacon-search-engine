@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <curl/curl.h>
+#include "gui.h"
 
 struct results
 {
@@ -90,7 +87,7 @@ char* file_to_array(char* path)
         return NULL;
     }
 
-    size_t read = fread(buffer, 1, file_size, file);  // Read the entire file into the buffer
+    long read = fread(buffer, 1, file_size, file);  // Read the entire file into the buffer
     if (read != file_size)
     {
         fprintf(stderr, "Failed to read the file: %s\n", path);
@@ -233,51 +230,7 @@ void array_to_file(char* path, char* data)
 
 #pragma endregion Htlm_Builder
 
-#pragma region IP_Address
-
-size_t callbackfunc(void* data, size_t size, size_t nmemb, char** response) {
-    size_t total_size = size * nmemb;
-    *response = malloc(total_size + 1);
-    if (*response) {
-        memcpy(*response, data, total_size);
-        (*response)[total_size] = '\0';
-    }
-    return total_size;
-}
-
-char* get_public_ip() {
-    CURL* curl;
-    CURLcode res;
-    char* response = NULL;
-    
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-    
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, "https://api.ipify.org");
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callbackfunc);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-        
-        res = curl_easy_perform(curl);
-        
-        if(res != CURLE_OK) {
-            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-            curl_easy_cleanup(curl);
-            curl_global_cleanup();
-            return NULL;    
-        }
-        
-        curl_easy_cleanup(curl);
-    }
-    
-    curl_global_cleanup();
-    
-    return response;
-}
-
-#pragma endregion IP_Address
-
-int launch_searcher(char* request)
+int launch_searcher(const gchar* request)
 {
     struct results *results = generate_random_results();
 
@@ -289,6 +242,7 @@ int launch_searcher(char* request)
 
     int results_number = 0;
     char str[12];
+    size_t str_size = sizeof(str);  // Here is the new size_t variable
 
     struct results *current = results;
     while (current != NULL)
@@ -316,8 +270,8 @@ int launch_searcher(char* request)
         return 1;
     }
     
-    int ret = snprintf(str, sizeof(str), "%d", results_number);
-    if(ret < 0 || ret >= sizeof(str))
+    int ret = snprintf(str, str_size, "%d", results_number);
+    if(ret < 0 || (size_t)ret >= str_size)  // Compare with str_size, and cast ret to size_t
     {
         fprintf(stderr, "Failed to write result number to string\n");
         free_results(results);
@@ -326,7 +280,7 @@ int launch_searcher(char* request)
         return 1;
     }
 
-    replace_substring(&template, "{RESEARCHSTR}", request);
+    replace_substring(&template, "{RESEARCHSTR}", (char*) request);
     replace_substring(&template, "{IPLOCATION}", ip);
     replace_substring(&template, "{RESULTSNUMBER}", str);
     insert_blocks_into_template(&template, results);

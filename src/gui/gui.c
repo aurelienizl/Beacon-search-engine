@@ -1,4 +1,4 @@
-#include "gui.h"
+#include "gui.h" 
 
 #pragma region Variables
 
@@ -10,6 +10,11 @@ int HEIGHT = 720;
 gchar *databasePath = "/db/";
 gint64 databaseSize = 0;
 gint64 entryCount = 0;
+gchar *crawler_url = "";
+gint crawler_thread_count = 0;
+gchar *current_ip = "";
+pthread_t crawler_thread;
+
 
 // Widgets
 
@@ -24,8 +29,7 @@ GtkWidget *buttonQuit;
 GtkWidget *menuDatabase;
 GtkWidget *menuSubDatabase;
 GtkWidget *buttonOpen;
-GtkWidget *buttonClose;
-GtkWidget *buttonRepair;
+GtkWidget *buttonCreate;
 GtkWidget *menuSettings;
 GtkWidget *menuSubSettings;
 GtkWidget *buttonInternet;
@@ -70,23 +74,114 @@ void on_buttonOpen_activate(GtkMenuItem *menuitem, gpointer data) {
     (void) data;
     g_print("Open button pressed\n");
     databasePath = open_folder();
+    if (strcmp(databasePath, "") == 0)
+    {
+        return;
+    }
     databaseSize = get_folder_size(databasePath);
     entryCount = folder_count(databasePath);
     gchar *databaseInfoText = g_strdup_printf("DB :  %s\nDB Size : %ld KB\nEntry Count : %ld", databasePath, databaseSize, entryCount);
     gtk_text_buffer_set_text(databaseInfo, databaseInfoText, -1);
 }
 
-void on_buttonClose_activate(GtkMenuItem *menuitem, gpointer data) {
-    (void) menuitem;
+#pragma region CreateDatabase
+
+void on_spin_button_value_changed(GtkSpinButton *spinButton, gpointer data) {
+    (void) spinButton;
     (void) data;
-    g_print("Close button pressed\n");
+    g_print("Spin button value changed\n");
+    crawler_thread_count = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinButton));
+    g_print("Thread count : %d\n", crawler_thread_count);
 }
 
-void on_buttonRepair_activate(GtkMenuItem *menuitem, gpointer data) {
+void on_urlEntry_activate(GtkEntry *urlEntry, gpointer data) {
+    (void) urlEntry;
+    (void) data;
+    g_print("Create button pressed\n");
+    crawler_url = g_strdup(gtk_entry_get_text(GTK_ENTRY(urlEntry)));
+    g_print("URL : %s\n", crawler_url);
+}
+
+void* on_crawler_launched(void *data) 
+{
+    char* url = (char*)data;
+    g_print("Crawler launched\n");
+    g_print("URL : %s\n", url);
+    crawl((void*) url);
+    // Set database path to the crawler database path
+    databasePath = "db/";
+    databaseSize = get_folder_size(databasePath);
+    entryCount = folder_count(databasePath);
+    gchar *databaseInfoText = g_strdup_printf("DB :  %s\nDB Size : %ld KB\nEntry Count : %ld", databasePath, databaseSize, entryCount);
+    gtk_text_buffer_set_text(databaseInfo, databaseInfoText, -1);
+    return NULL;
+}
+
+void on_buttonStart_activate(GtkButton *startButton, gpointer data) {
+    (void) startButton;
+    (void) data;
+    g_print("Start button pressed\n");
+    g_print("URL : %s\n", crawler_url);
+    g_print("Thread count : %d\n", crawler_thread_count);
+    pthread_create(&crawler_thread, NULL, on_crawler_launched, (void *)crawler_url);
+
+}
+
+void on_buttonCreate_activate(GtkMenuItem *menuitem, gpointer data) {
     (void) menuitem;
     (void) data;
-    g_print("Repair button pressed\n");
+    g_print("Create button pressed\n");
+
+    // Create and display a new window.
+    GtkWidget *dialog = gtk_dialog_new();
+    gtk_window_set_title(GTK_WINDOW(dialog), "Create Database");
+
+    // Get the dialog's content area.
+    GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    // Set the dialog's size and position.
+    gtk_window_set_default_size(GTK_WINDOW(dialog), 300, 100);
+    
+    // Create a label for the spin button.
+    GtkWidget *spinLabel = gtk_label_new("Number of threads");
+    gtk_box_pack_start(GTK_BOX(content_area), spinLabel, FALSE, FALSE, 5);
+
+    // Create a spin button for choosing the number of threads.
+    GtkWidget *spinButton = gtk_spin_button_new_with_range(1, 100, 1);
+    gtk_box_pack_start(GTK_BOX(content_area), spinButton, FALSE, FALSE, 5);
+    g_signal_connect(spinButton, "value-changed", G_CALLBACK(on_spin_button_value_changed), NULL);
+
+    // Create a label for showing the current IP address.
+    if (current_ip == NULL)
+    {
+        current_ip = "xxx.xxx.xxx.xxx";
+    }
+    else 
+    {
+        // Add to the current IP address the string "IP:"
+        gchar *ipLabelString = g_strdup_printf("Current IP: %s", current_ip);
+        current_ip = ipLabelString;
+    }
+    GtkWidget *ipLabel = gtk_label_new(current_ip); 
+    gtk_box_pack_start(GTK_BOX(content_area), ipLabel, FALSE, FALSE, 5);
+
+    // Create an entry for user to enter an URL.
+    GtkWidget *urlEntry = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(urlEntry), "Enter URL");
+    gtk_box_pack_start(GTK_BOX(content_area), urlEntry, FALSE, FALSE, 5);
+    // Create a signal handler for the entry when the value changes.
+    g_signal_connect(urlEntry, "activate", G_CALLBACK(on_urlEntry_activate), NULL);
+
+    // Add a button for starting the crawler.
+    GtkWidget *startButton = gtk_button_new_with_label("Start");
+    gtk_box_pack_start(GTK_BOX(content_area), startButton, FALSE, FALSE, 5);
+    // Create a signal handler for the button when it is clicked.
+    g_signal_connect(startButton, "clicked", G_CALLBACK(on_buttonStart_activate), NULL);
+
+    gtk_widget_show_all(dialog);
 }
+
+#pragma endregion CreateDatabase
 
 void on_buttonInternet_activate(GtkMenuItem *menuitem, gpointer data)
 {
@@ -133,7 +228,6 @@ void on_buttonInternet_activate(GtkMenuItem *menuitem, gpointer data)
     gtk_widget_destroy(dialog);
 }
 
-
 void on_buttonThreads_activate(GtkMenuItem *menuitem, gpointer data) {
     (void) menuitem;
     (void) data;
@@ -150,6 +244,10 @@ void on_buttonSearch_activate(GtkMenuItem *menuitem, gpointer data) {
     (void) menuitem;
     (void) data;
     g_print("Search button pressed\n");
+    // Get the text from the search entry
+    const gchar *text = gtk_entry_get_text(GTK_ENTRY(inputSearch));
+    // Launch the searcher
+    launch_searcher(text);
 }
 
 void on_buttonWebsite_activate(GtkMenuItem *menuitem, gpointer data) {
@@ -164,12 +262,14 @@ void on_buttonGithub_activate(GtkMenuItem *menuitem, gpointer data) {
     g_print("Github button pressed\n");
 }
 
-
 #pragma endregion Callbacks
 
 int main(int argc, char *argv[]) {
 
     gtk_init(&argc, &argv);
+
+    // Get the current ip address
+    current_ip = get_public_ip();
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
@@ -213,13 +313,9 @@ int main(int argc, char *argv[]) {
     gtk_menu_shell_append(GTK_MENU_SHELL(menuSubDatabase), buttonOpen);
     g_signal_connect(buttonOpen, "activate", G_CALLBACK(on_buttonOpen_activate), NULL);
 
-    buttonClose = gtk_menu_item_new_with_label("Update database");
-    gtk_menu_shell_append(GTK_MENU_SHELL(menuSubDatabase), buttonClose);
-    g_signal_connect(buttonClose, "activate", G_CALLBACK(on_buttonClose_activate), NULL);
-
-    buttonRepair = gtk_menu_item_new_with_label("Repair database");
-    gtk_menu_shell_append(GTK_MENU_SHELL(menuSubDatabase), buttonRepair);
-    g_signal_connect(buttonRepair, "activate", G_CALLBACK(on_buttonRepair_activate), NULL);
+    buttonCreate = gtk_menu_item_new_with_label("Create database");
+    gtk_menu_shell_append(GTK_MENU_SHELL(menuSubDatabase), buttonCreate);
+    g_signal_connect(buttonCreate, "activate", G_CALLBACK(on_buttonCreate_activate), NULL);
 
     menuSettings = gtk_menu_item_new_with_mnemonic("_Settings");
     gtk_menu_shell_append(GTK_MENU_SHELL(mainMenu), menuSettings);

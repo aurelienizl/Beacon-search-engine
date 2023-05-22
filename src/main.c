@@ -2,7 +2,7 @@
 
 int main(void)
 {
-	char *url = "https://manpages.org/netframelayeripv4/3";
+	char *url = "https://fr.manpages.org/";
 	crawl(url);
 	return 0;
 }
