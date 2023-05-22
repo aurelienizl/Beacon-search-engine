@@ -11,6 +11,7 @@
 #define maxword 50
 
 void normalize(char *word);
+char* removeSpecialChars(char* str);
 char* get_stem(char *input_word);
 int check_word(char *word);
 

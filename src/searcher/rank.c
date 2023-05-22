@@ -2,8 +2,6 @@
 
 int countCallback(void* data, int argc, char** argv, char** columnNames) 
 {
-    printf("I am in countCallback\n");
-    
     int* count = (int*)data;
     *count = atoi(argv[0]);
     return 0;
@@ -12,8 +10,6 @@ int countCallback(void* data, int argc, char** argv, char** columnNames)
 
 int check_chunk(sqlite3* db, struct chunk* words)
 {
-    printf("I am in check_chunk\n");
-    
     int res = 1;
     
     // this is just a word
@@ -21,16 +17,19 @@ int check_chunk(sqlite3* db, struct chunk* words)
     {
         char* error_message = NULL;
         
-        char* target = words->stem;
+        char query[256];
+        
         if(words->formatted)
         {
-            target = words->word;
+            snprintf(query, sizeof(query), "SELECT COUNT(*) FROM positions WHERE word LIKE '%s'", words->word);
+        }
+        else
+        {
+            snprintf(query, sizeof(query), "SELECT COUNT(*) FROM positions WHERE word = '%s'", words->stem);
         }
 
-        char query[100];
-        snprintf(query, sizeof(query), "SELECT COUNT(*) FROM positions WHERE word = '%s'", target);
-
         int count = 0;
+        printf("%s\n", query);
         int rc = sqlite3_exec(db, query, countCallback, &count, &error_message);
         if (rc != SQLITE_OK) 
         {
@@ -49,68 +48,77 @@ int check_chunk(sqlite3* db, struct chunk* words)
     // this is a whole chunk
     else
     {
-        char* error_message = NULL;
+        int numWords = 1;
+        int threshold = 0;
+        char** elements = malloc(sizeof(char*));
+        elements[0] = words->stem;
+        threshold += strlen(words->word);
+        struct chunk* current = words->next;
+        while(current != NULL)
+        {
+            numWords++;
+            elements = realloc(elements, sizeof(char*) * numWords);
+            elements[numWords - 1] = current->stem;
+            threshold += strlen(current->word);
+            current = current->next;
+        }
+
+        threshold += 50;
         
-        // calculate the number of words
-        char query[512];
-        strcpy(query, "SELECT COUNT(*) FROM positions WHERE word IN (");
-        struct chunk* current = words;
-        while(current->next != NULL) 
-        {
-            strcat(query, "'");
-            strcat(query, current->stem);
-            strcat(query, "'");
-
-            current = current->next;
-        }
-
-        strcat(query, "'");
-        strcat(query, current->stem);
-        strcat(query, "'");
-        strcat(query, ", ");
-        strcat(query, ");");
-
         int count = 0;
-        int rc = sqlite3_exec(db, query, countCallback, &count, &error_message);
-        if (rc != SQLITE_OK) 
-        {
-            fprintf(stderr, "SQLite error: %s\n", error_message);
-            sqlite3_free(error_message);
-            sqlite3_close(db);
-            return 0;
+        sqlite3_stmt *stmt;
+        
+        for (int i = 0; i < numWords; i++) {
+            for (int j = i + 1; j < numWords; j++) 
+            {
+                // Prepare the SQL statement
+                const char *sql = "SELECT ABS((SELECT position FROM positions WHERE word = ?) - (SELECT position FROM positions WHERE word = ?))";
+                int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+                if (rc != SQLITE_OK) 
+                {
+                    printf("Error preparing SQL statement: %s\n", sqlite3_errmsg(db));
+                    continue;
+                }
+                
+                // Bind the words as parameters
+                rc = sqlite3_bind_text(stmt, 1, elements[i], -1, SQLITE_STATIC);
+                if (rc != SQLITE_OK) 
+                {
+                    printf("Error binding word1 parameter: %s\n", sqlite3_errmsg(db));
+                    continue;
+                }
+                
+                rc = sqlite3_bind_text(stmt, 2, elements[j], -1, SQLITE_STATIC);
+                if (rc != SQLITE_OK) 
+                {
+                    printf("Error binding word2 parameter: %s\n", sqlite3_errmsg(db));
+                    continue;
+                }
+                
+                // Execute the SQL statement
+                rc = sqlite3_step(stmt);
+                if (rc == SQLITE_ROW) 
+                {
+                    int distance = sqlite3_column_int(stmt, 0);
+                    if (distance < threshold) 
+                    {
+                        count++;
+                    }
+                } 
+                else if (rc != SQLITE_DONE) 
+                {
+                    printf("Error executing SQL statement: %s\n", sqlite3_errmsg(db));
+                    continue;
+                }
+
+                // Reset the statement for the next iteration
+                sqlite3_reset(stmt);
+            }
         }
 
-        // calculate their spread
-        char spreadQuery[512];
-        sprintf(spreadQuery, "SELECT MIN((MAX(position) - MIN(position)) / (COUNT(*) - 1)) "
-                         "FROM positions WHERE word IN (");
-
-        current = words;
-        while (current->next != NULL) 
-        {
-            strcat(query, "'");
-            strcat(query, current->stem);
-            strcat(query, "'");
-
-            current = current->next;
-        }
-
-        strcat(query, "'");
-        strcat(query, current->stem);
-        strcat(query, "'");
-        strcat(query, ", ");
-        strcat(query, ");");
-
-        double averageSpread = 0;
-        rc = sqlite3_exec(db, spreadQuery, countCallback, &averageSpread, &error_message);
-        if (rc != SQLITE_OK) {
-            fprintf(stderr, "SQLite error: %s\n", error_message);
-            sqlite3_free(error_message);
-            sqlite3_close(db);
-            return 0;
-        }
-
-        res = (int)(averageSpread * (double)count);
+        // Finalize the statement and return the result
+        sqlite3_finalize(stmt);
+        res = count;
     }
 
     return res;
@@ -119,8 +127,6 @@ int check_chunk(sqlite3* db, struct chunk* words)
 // This function calculates the final score of a page for a full query
 int evaluate(struct result** page, struct chunk** words, int num_words)
 {
-    printf("I am in evaluate\n");
-
     int score = 0;
     
     // Get the directory of the database of the page
@@ -153,7 +159,10 @@ int evaluate(struct result** page, struct chunk** words, int num_words)
 
 struct result** output_results(struct result** results, struct chunk** words, int num_words)
 {
-    printf("I am in output_results\n");
+    if(*results == NULL)
+    {
+        return NULL;
+    }
     
     // Initialize result struct 
     evaluate(results, words, num_words);

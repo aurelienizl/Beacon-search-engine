@@ -6,21 +6,42 @@ void normalize(char *word) {
     }
 }
 
-char *get_stem(char *word) {
+char* removeSpecialChars(char* str) 
+{
+  int length = strlen(str);
+  char* result = (char*) malloc((length + 1) * sizeof(char)); 
+
+  int j = 0;
+  for (int i = 0; i < length; i++) 
+  {
+    if (isalnum(str[i])) 
+    { 
+      result[j++] = str[i]; 
+    }
+  }
+
+  result[j] = '\0'; 
+  return result;
+}
+
+char *get_stem(char *word) 
+{
+    char* newword = removeSpecialChars(word);
+
     struct sb_stemmer *stemmer = sb_stemmer_new("english", NULL);
     if (!stemmer) {
         fprintf(stderr, "Error creating stemmer.\n");
         return NULL;
     }
-    char *stemmed_word = (char *) malloc(sizeof(char) * (strlen(word) + 1));
+    char *stemmed_word = (char *) malloc(sizeof(char) * (strlen(newword) + 1));
     if (!stemmed_word) {
         fprintf(stderr, "Error allocating memory for stemmed word.\n");
         sb_stemmer_delete(stemmer);
         return NULL;
     }
-    const sb_symbol* stemmed = sb_stemmer_stem(stemmer, (unsigned char *) word, strlen(word));
+    const sb_symbol* stemmed = sb_stemmer_stem(stemmer, (unsigned char *) newword, strlen(newword));
     if (stemmed_word == NULL) {
-        fprintf(stderr, "Error stemming word '%s'.\n", word);
+        fprintf(stderr, "Error stemming word '%s'.\n", newword);
         free(stemmed_word);
         sb_stemmer_delete(stemmer);
         return NULL;

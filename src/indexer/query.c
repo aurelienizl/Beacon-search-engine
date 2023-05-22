@@ -50,7 +50,7 @@ struct chunk** extractWords(const char* query, int* chunkCount) {
             else
             {
                 //create that word, add it to a chunk
-                struct chunk* new_chunk = init_chunk(strdup(token), token[0] == '$', strchr(token, '*') != NULL);
+                struct chunk* new_chunk = init_chunk(strdup(token), token[0] == '$', strchr(token, '%') != NULL);
                 result[count - 1] = stack_word(result[count - 1], new_chunk);
             }
         }
@@ -71,8 +71,8 @@ struct chunk** extractWords(const char* query, int* chunkCount) {
             //create that word, add it to the list 
             result = realloc(result, (count + 1) * sizeof(struct chunk));
             normalize(token);
-            token = get_stem(token);
-            result[count] = init_chunk(strdup(token), token[0] == '$', strchr(token, '*') != NULL);
+            char* tokenb = get_stem(token);
+            result[count] = init_chunk(strdup(tokenb), token[0] == '$', strchr(token, '%') != NULL);
             count++;
         }
         

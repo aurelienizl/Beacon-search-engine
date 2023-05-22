@@ -20,6 +20,13 @@ int main()
     }
 
     struct result** sorted = output_results(results, words, num_words);
+
+    if(sorted == NULL)
+    {
+        printf("no results found for your request\n");
+        return 0;
+    }
+
     current = *sorted;
     while(current != NULL)
     {
