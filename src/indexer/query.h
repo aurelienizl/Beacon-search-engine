@@ -21,6 +21,6 @@ struct chunk* init_chunk(char* word, int weighted, int formatted);
 struct chunk* stack_word(struct chunk* chunk, struct chunk* new_chunk);
 struct chunk* unstack_word(struct chunk* chunk, struct chunk** element);
 struct chunk** extractWords(const char* query, int* chunkCount);
-struct chunk** get_query(int* num);
+struct chunk** get_query(char** query, int* num);
 
 #endif

@@ -17,7 +17,7 @@ STEMMER_INC := -I/path/to/libstemmer/include
 INCLUDES := -I/usr/include/libxml2 -I/usr/include/sqlite3
 
 # Source files
-SRC := ../structures/lists/linked-list/operations.c ../indexer/query.c ../indexer/lexicon.c ../database/crypto.c search.c rank.c test.c
+SRC := ../structures/lists/linked-list/operations.c ../indexer/query.c ../indexer/lexicon.c  search.c rank.c find.c test.c
 # Object files
 OBJ := $(SRC:.c=.o)
 

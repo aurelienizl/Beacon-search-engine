@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "word_extractor.h"
+#include "parse.h"
 
 char* base64_decode(char* input)
 {
@@ -17,7 +15,8 @@ char* base64_decode(char* input)
     return buffer;
 }
 
-void read_file(const char *filename, char **content) {
+void read_file(const char *filename, char **content) 
+{
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         perror("Error opening file");
@@ -84,4 +83,6 @@ void parse(const char* path)
         }
     }
     closedir(dir);
+
+    create_word_db("../barrels");
 }

@@ -17,12 +17,12 @@ STEMMER_INC := -I/path/to/libstemmer/include
 INCLUDES := -I/usr/include/libxml2 -I/usr/include/sqlite3
 
 # Source files
-SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c table.c main.c
+SRC := ../structures/lists/linked-list/operations.c lexicon.c word_extractor.c table.c parse.c test.c
 # Object files
 OBJ := $(SRC:.c=.o)
 
 # Output binary
-BIN := word_extractor
+BIN := test
 
 all: $(BIN)
 
@@ -35,10 +35,6 @@ $(BIN): $(OBJ)
 clean:
 	rm -f $(OBJ) $(BIN)
 	rm ../barrels/*
-	rm reverse_vector.db
-
-killexec:
-	rm -f $(OBJ) $(BIN)
 	rm reverse_vector.db
 
 
