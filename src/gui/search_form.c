@@ -18,9 +18,9 @@ struct results *generate_results(struct result *res)
     {
         struct results *new_result = malloc(sizeof(struct results));
         // Generate random title.
-        new_result->title = strdup("Titled");
+        new_result->title = strdup(res->title);
         new_result->url = strdup(res->url);
-        new_result->description = strdup("Description");
+        new_result->description = strdup(res->description);
         new_result->block = NULL; // Initialize block to NULL
         new_result->next = NULL;
         // Rest of your code...
@@ -113,27 +113,32 @@ char *file_to_array(char *path)
 
 char *build_block_result(const char *title, const char *url, const char *description)
 {
-    const char *block = strdup(
+    const char *block_template =
         "<div class=\"searchresult\">"
         "<h2>{TITLE}</h2>"
         "<a href=\"{URL}\">{URL}</a> <button>▼</button>"
         "<p>{DESCRIPTION}</p>"
-        "</div>");
+        "</div>";
 
-    size_t blockLength = strlen(block);
+    // lengths of the placeholders
+    size_t placeholderLength = strlen("{TITLE}") + strlen("{URL}") * 2 + strlen("{DESCRIPTION}");
+
     size_t titleLength = strlen(title);
     size_t urlLength = strlen(url);
     size_t descriptionLength = strlen(description);
 
-    char *res = malloc(blockLength + titleLength + urlLength + descriptionLength + 1);
-    if (res == NULL)
+    // calculate blockLength with lengths of placeholders and actual strings
+    size_t blockLength = strlen(block_template) - placeholderLength + titleLength + urlLength * 2 + descriptionLength;
+
+    char *block = malloc(blockLength + 1);
+    if (block == NULL)
     {
         perror("Memory allocation failed");
         return NULL;
     }
 
-    char *ptr = res;
-    const char *start = block;
+    char *ptr = block;
+    const char *start = block_template;
     while (*start)
     {
         switch (*start)
@@ -168,8 +173,10 @@ char *build_block_result(const char *title, const char *url, const char *descrip
         }
     }
     *ptr = '\0';
-    return res;
+    return block;
 }
+
+
 
 void replace_substring(char **str, char *to_replace, char *replace_with)
 {
@@ -283,6 +290,9 @@ int launch_searcher(const gchar *request)
     printf("Generating results...\n");
     struct results *head = generate_results(*results);
 
+    
+
+
     int results_number = 0;
     char str[12];
     size_t str_size = sizeof(str);
@@ -302,6 +312,8 @@ int launch_searcher(const gchar *request)
         current_results = current_results->next;
         results_number++;
     }
+
+    
 
     printf("Building page...\n");
     char *template = file_to_array("interface/results/index.html");

@@ -114,7 +114,7 @@ struct result** get_pages(struct chunk** words, int num_words)
     char* error_message = NULL;
     int rc;
 
-    rc = sqlite3_open("../indexer/reverse_vector.db", &db);
+    rc = sqlite3_open("reverse_vector.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);

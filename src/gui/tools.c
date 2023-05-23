@@ -142,7 +142,7 @@ char* get_public_ip() {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
             curl_easy_cleanup(curl);
             curl_global_cleanup();
-            return NULL;    
+            return strdup("xxx.xxx.xxx.xxx");
         }
         
         curl_easy_cleanup(curl);
