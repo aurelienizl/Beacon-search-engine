@@ -73,11 +73,13 @@ void on_buttonOpen_activate(GtkMenuItem *menuitem, gpointer data) {
     (void) menuitem;
     (void) data;
     g_print("Open button pressed\n");
-    databasePath = open_folder();
-    if (strcmp(databasePath, "") == 0)
+    gchar *folderPath = open_folder();
+    if (folderPath == NULL || strcmp(folderPath, "") == 0)
     {
+        g_print("No folder selected!\n");
         return;
     }
+    databasePath = folderPath;
     databaseSize = get_folder_size(databasePath);
     entryCount = folder_count(databasePath);
     gchar *databaseInfoText = g_strdup_printf("DB :  %s\nDB Size : %ld KB\nEntry Count : %ld", databasePath, databaseSize, entryCount);
