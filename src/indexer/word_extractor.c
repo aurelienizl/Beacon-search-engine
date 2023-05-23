@@ -13,7 +13,7 @@ char* sha1_hashh(const unsigned char *data, size_t len)
     return sha1string;
 }
 
-int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path) {
+int create_database(char* title, char* description, word_info_t* word_list, char* url, int word_count, const char* db_path) {
     sqlite3* db;
     char* err_msg = 0;
 
@@ -53,7 +53,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     }
 
     // Create anchor table 
-    const char* create_anchor_sql = "CREATE TABLE IF NOT EXISTS anchor (url TEXT);";
+    const char* create_anchor_sql = "CREATE TABLE IF NOT EXISTS anchor (url TEXT, title TEXT, description TEXT);";
     rc = sqlite3_exec(db, create_anchor_sql, 0, 0, &err_msg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to create anchor table: %s\n", err_msg);
@@ -63,7 +63,7 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     }
 
     // Prepare the INSERT statements
-    const char* insert_info_sql = "INSERT INTO anchor (url) VALUES (?);";
+    const char* insert_info_sql = "INSERT INTO anchor (url, title, description) VALUES (?, ?, ?);";
     sqlite3_stmt* insert_info_stmt;
     rc = sqlite3_prepare_v2(db, insert_info_sql, -1, &insert_info_stmt, 0);
     if (rc != SQLITE_OK) {
@@ -100,6 +100,20 @@ int create_database(word_info_t* word_list, char* url, int word_count, const cha
     rc = sqlite3_bind_text(insert_info_stmt, 1, url, -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to bind URL parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_info_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+    rc = sqlite3_bind_text(insert_info_stmt, 2, title, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to bind TITLE parameter: %s\n", sqlite3_errmsg(db));
+        sqlite3_finalize(insert_info_stmt);
+        sqlite3_close(db);
+        return 1;
+    }
+    rc = sqlite3_bind_text(insert_info_stmt, 3, description, -1, SQLITE_STATIC);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to bind DESCRIPTION parameter: %s\n", sqlite3_errmsg(db));
         sqlite3_finalize(insert_info_stmt);
         sqlite3_close(db);
         return 1;
@@ -294,6 +308,9 @@ int get_words(char* url, char* html_content) {
     int word_count = 0;
     int pos = 0;
 
+    char* title = get_title(html_content);
+    char* description = get_description(html_content);
+
     extract_words(html_content, &word_list, &word_count, &pos);
     printf("done parsing : %d\n", word_count);
 
@@ -314,7 +331,7 @@ int get_words(char* url, char* html_content) {
     strcpy(directory, "../barrels/");
     strcat(directory, checksum);
     strcat(directory, ".db");
-    create_database(word_list, url, word_count, (const char*)directory);
+    create_database(title, description, word_list, url, word_count, (const char*)directory);
 
     // Clean up
     

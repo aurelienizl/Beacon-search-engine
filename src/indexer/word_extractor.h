@@ -16,6 +16,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
+#include "info.h"
 
 
 #define MAX_WORD_LEN 100
@@ -29,7 +30,7 @@ typedef struct word_info {
 
 
 char* sha1_hash(const unsigned char *data, size_t len);
-int create_database(word_info_t* word_list, char* url, int word_count, const char* db_path);
+int create_database(char* title, char* description, word_info_t* word_list, char* url, int word_count, const char* db_path);
 int is_word_char(char c);
 void extract_words(char* html_content, word_info_t** word_list, int* word_count, int* pos);
 int get_words(char* url, char* html_content);

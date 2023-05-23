@@ -1,11 +1,30 @@
 #include "search.h"
 
-struct result* init_result(const char* url, int score)
+struct result* init_result(const char* url, const char* title, const char* description, int score)
 {
     struct result* new_result = malloc(sizeof(struct result));
-    char* string = malloc(sizeof(char) * (strlen(url) + 1));
-    strcpy(string, (char*)url);
-    new_result->url = string;
+    char* curl = malloc(sizeof(char) * (strlen(url) + 1));
+    strcpy(curl, (char*)url);
+    
+    new_result->url = curl;
+    
+    if(title != NULL)
+    {
+        new_result->title = strdup(title);
+    }
+    else
+    {
+        new_result->title = NULL;
+    }
+
+    if(description != NULL)
+    {
+        new_result->description = strdup(description);
+    }
+    else
+    {
+        new_result->description = NULL;
+    }
     new_result->next = NULL;
     new_result->score = score;
 
@@ -22,6 +41,8 @@ struct result* stack_result(struct result* result, struct result* new_result)
 struct result* unstack_result(struct result* result, struct result** element)
 {
     (*element)->url = result->url;
+    (*element)->title = result->title;
+    (*element)->description = result->description;
     (*element)->score = result->score;
 
     struct result* new_head = result->next;
@@ -67,7 +88,7 @@ void add_url_to_results(struct result** results, const char* url, int inc)
     }
 
     //if the URL is not already in the results, add it as a new node
-    struct result* new_result = init_result(url, inc);
+    struct result* new_result = init_result(url, NULL, NULL, inc);
     (*results) = stack_result(*results, new_result);
 }
 
@@ -93,7 +114,7 @@ struct result** get_pages(struct chunk** words, int num_words)
     char* error_message = NULL;
     int rc;
 
-    rc = sqlite3_open("reverse_vector.db", &db);
+    rc = sqlite3_open("../indexer/reverse_vector.db", &db);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
         sqlite3_close(db);

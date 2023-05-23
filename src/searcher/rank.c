@@ -168,9 +168,35 @@ int evaluate(struct result** page, struct chunk** words, int num_words)
     {
         score += check_chunk(db, words[i]);
     }
+    
+    sqlite3_stmt* fill;
+    const char* data = "SELECT url, title, description FROM anchor";
+    rc = sqlite3_prepare_v2(db, data, -1, &fill, NULL);
+    if (rc != SQLITE_OK) 
+    {
+        fprintf(stderr, "Failed to prepare statement for anchor: %s\n", sqlite3_errmsg(db));
+        sqlite3_close(db);
+        return 0;
+    }
 
-    sqlite3_close(db);
+    // Fetch the rows from the result set
+    while (sqlite3_step(fill) == SQLITE_ROW) 
+    {
+        const char* title = (const char*)sqlite3_column_text(fill, 1);
+        const char* description = (const char*)sqlite3_column_text(fill, 2);
+
+        // Fill the result struct with data
+        (*page)->title = strdup(title);
+        (*page)->description = strdup(description);
+    }
+
+    // Finalize the statement and close the database connection
+    sqlite3_finalize(fill);
+
     (*page)->score = score;
+    
+    sqlite3_close(db);
+    
     return score;
 }
 
@@ -184,13 +210,13 @@ struct result** output_results(struct result** results, struct chunk** words, in
     // Initialize result struct 
     evaluate(results, words, num_words);
     struct result** sorted_results = malloc(sizeof(struct result*));
-    *sorted_results = init_result((*results)->url, (*results)->score);
+    *sorted_results = init_result((*results)->url, (*results)->title, (*results)->description, (*results)->score);
     
     struct result* current = (*results)->next;
     while(current != NULL)
     {
         evaluate(&current, words, num_words);
-        *sorted_results = insert_result(*sorted_results, init_result(current->url, current->score));
+        *sorted_results = insert_result(*sorted_results, init_result(current->url, current->title, current->description, current->score));
         current = current->next; 
     }
 

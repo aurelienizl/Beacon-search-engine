@@ -12,11 +12,13 @@
 struct result
 {
     const char* url;
+    char* title;
+    char* description;
     struct result* next;
     int score;
 };
 
-struct result* init_result(const char* url, int score);
+struct result* init_result(const char* url, const char* title, const char* description, int score);
 struct result* stack_result(struct result* result, struct result* new_result);
 struct result* unstack_result(struct result* chunk, struct result** element);
 struct result* insert_result(struct result* result, struct result* new_result);
