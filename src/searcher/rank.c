@@ -25,7 +25,7 @@ int countCallback(void* data, int argc, char** argv, char** columnNames)
 }
 
 
-int check_chunk(sqlite3* db, struct chunk* words)
+int check_chunk(sqlite3* db, struct chunk* words, int weight)
 {
     int res = 1;
     
@@ -138,7 +138,7 @@ int check_chunk(sqlite3* db, struct chunk* words)
         res = count;
     }
 
-    return res;
+    return res*weight;
 }
 
 // This function calculates the final score of a page for a full query
@@ -166,7 +166,7 @@ int evaluate(struct result** page, struct chunk** words, int num_words)
     // Check for every word of the query
     for(int i = 0; i < num_words; i++)
     {
-        score += check_chunk(db, words[i]);
+        score += check_chunk(db, words[i], num_words - i);
     }
     
     sqlite3_stmt* fill;
