@@ -104,6 +104,7 @@ void on_urlEntry_activate(GtkEntry *urlEntry, gpointer data) {
 
 void* on_crawler_launched(void *data) 
 {
+    
     char* url = (char*)data;
     g_print("Crawler launched\n");
     g_print("URL : %s\n", url);
@@ -114,6 +115,7 @@ void* on_crawler_launched(void *data)
     entryCount = folder_count(databasePath);
     gchar *databaseInfoText = g_strdup_printf("DB :  %s\nDB Size : %ld KB\nEntry Count : %ld", databasePath, databaseSize, entryCount);
     gtk_text_buffer_set_text(databaseInfo, databaseInfoText, -1);
+    parse("db");
     return NULL;
 }
 

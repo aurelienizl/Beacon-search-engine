@@ -73,6 +73,7 @@ void parse(const char* path)
                 char* file_content;
                 // Read the file
                 read_file(index_path, &file_content);
+                // Display the url
                 // Extract the words from the file
                 get_words(url, file_content);
             }

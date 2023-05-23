@@ -27,28 +27,6 @@ char *string_to_heap(char *string)
     return buffer;
 }
 
-char* sha1_hash(const unsigned char *data, size_t len)
-{
-    unsigned char digest[SHA_DIGEST_LENGTH];
-    SHA1(data, len, digest);
-
-    static const char hex_table[] = "0123456789abcdef";
-    char *sha1string = (char *)malloc(SHA_DIGEST_LENGTH * 2 + 1);
-
-    if (!sha1string) 
-    {
-        fprintf(stderr, "Memory allocation failed in sha1_hash\n");
-        return NULL;
-    }
-
-    for (int i = 0; i < SHA_DIGEST_LENGTH; ++i)
-    {
-        sha1string[i * 2] = hex_table[digest[i] >> 4];
-        sha1string[i * 2 + 1] = hex_table[digest[i] & 0x0F];
-    }
-    sha1string[SHA_DIGEST_LENGTH * 2] = '\0';
-    return sha1string;
-}
 
 char* base64_encode(char* input)
 {
@@ -65,19 +43,4 @@ char* base64_encode(char* input)
     output[buffer->length] = '\0';
     BIO_free_all(bio);
     return output;
-}
-
-char* base64_decode(char* input)
-{
-    BIO *bio, *b64;
-    int len = strlen(input);
-    char *buffer = (char *) malloc(len);
-    b64 = BIO_new(BIO_f_base64());
-    bio = BIO_new_mem_buf(input, len);
-    bio = BIO_push(b64, bio);
-    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-    int decoded_len = BIO_read(bio, buffer, len);
-    buffer[decoded_len] = '\0';
-    BIO_free_all(bio);
-    return buffer;
 }

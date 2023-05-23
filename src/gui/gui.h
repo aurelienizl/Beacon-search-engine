@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <curl/curl.h>
 
+#include "../indexer/parse.h"
 #include "../crawler/crawler.h"
 
 

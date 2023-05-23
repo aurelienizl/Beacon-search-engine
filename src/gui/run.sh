@@ -1,3 +1,5 @@
 make -B &&
 ./exampleapp &&
-make clean
+make clean && 
+rm -r reverse_vector.db && 
+rm -r db

@@ -20,10 +20,6 @@
 #include <openssl/buffer.h>
 
 
-// tools fonctions 
-
-char* base64_decode(char* input);
-
 char* base64_encode(char* input);
 
 char* sha1_hash(const unsigned char *data, size_t len);

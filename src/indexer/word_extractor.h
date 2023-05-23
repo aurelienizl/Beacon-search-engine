@@ -12,7 +12,11 @@
 #include <sqlite3.h>
 #include <unistd.h>
 #include "lexicon.h"
-#include "../crawler/crawler.h"
+#include <openssl/sha.h>
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/buffer.h>
+
 
 #define MAX_WORD_LEN 100
 #define MAX_URL_LEN 512
