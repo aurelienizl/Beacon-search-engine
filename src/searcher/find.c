@@ -1,6 +1,6 @@
 #include "find.h"
 
-struct results** find(char** input)
+struct result** find(char** input)
 {   
     struct result** results;
 

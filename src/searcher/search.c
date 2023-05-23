@@ -71,8 +71,11 @@ void add_url_to_results(struct result** results, const char* url, int inc)
     (*results) = stack_result(*results, new_result);
 }
 
-int process_database_callback(void* data, int argc, char** argv, char** column_names) 
+int process_database_callback(void* data, int argc, char** argv, char**column_names) 
 {
+    (void)argc;
+    (void)column_names;
+    
     struct result** results = (struct result**)data;
     const char* url = argv[2];
 

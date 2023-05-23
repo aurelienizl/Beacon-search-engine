@@ -34,12 +34,3 @@ $(BIN): $(OBJ)
 
 clean:
 	rm -f $(OBJ) $(BIN)
-	rm ../barrels/*
-	rm reverse_vector.db
-
-killexec:
-	rm -f $(OBJ) $(BIN)
-	rm reverse_vector.db
-
-
-

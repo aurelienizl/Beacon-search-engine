@@ -5,6 +5,6 @@
 #include "search.h"
 #include "rank.h"
 
-struct results** find(char** input);
+struct result** find(char** input);
 
 #endif

@@ -16,6 +16,9 @@ char* sha1_hash(const unsigned char *data, size_t len)
 
 int countCallback(void* data, int argc, char** argv, char** columnNames) 
 {
+    (void)argc;
+    (void)columnNames;
+    
     int* count = (int*)data;
     *count = atoi(argv[0]);
     return 0;

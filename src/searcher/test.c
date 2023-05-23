@@ -2,7 +2,7 @@
 
 int main()
 {
-    char* input = malloc(sizeof(char) * 512);
+    char input[512];
     
     if (fgets(input, sizeof(input), stdin) != NULL) 
     {
@@ -14,7 +14,8 @@ int main()
         }
     }
     
-    find(&input);
+    char* query = strdup(input);
+    find(&query);
 
     return 0;
 }
