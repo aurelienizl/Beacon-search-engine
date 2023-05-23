@@ -1,6 +1,6 @@
 #include "word_extractor.h"
 
-char* sha1_hash(const unsigned char *data, size_t len)
+char* sha1_hashh(const unsigned char *data, size_t len)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
     SHA1(data, len, digest);
@@ -310,7 +310,7 @@ int get_words(char* url, char* html_content) {
     }
 
     char* directory = calloc(265, sizeof(char));
-    char* checksum = sha1_hash((const unsigned char *)url, strlen(url)); 
+    char* checksum = sha1_hashh((const unsigned char *)url, strlen(url)); 
     strcpy(directory, "../barrels/");
     strcat(directory, checksum);
     strcat(directory, ".db");

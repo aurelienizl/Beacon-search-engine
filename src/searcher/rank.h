@@ -1,9 +1,10 @@
 #ifndef RANK_H
 #define RANK_H
 
+#include <openssl/sha.h>
 #include "search.h"
 #include "../indexer/query.h"
-#include "../crawler/crawler.h"
+
 
 char* sha1_hash(const unsigned char *data, size_t len);
 int countCallback(void* data, int argc, char** argv, char** _columnNames);

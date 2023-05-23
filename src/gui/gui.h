@@ -12,6 +12,7 @@
 
 #include "../indexer/parse.h"
 #include "../crawler/crawler.h"
+#include "../searcher/find.h"
 
 
 #ifndef DT_DIR

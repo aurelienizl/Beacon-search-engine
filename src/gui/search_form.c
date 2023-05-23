@@ -232,30 +232,24 @@ void array_to_file(char* path, char* data)
 
 int launch_searcher(const gchar* request)
 {
-    struct results *results = generate_random_results();
-
-    if (results == NULL)
-    {
-        fprintf(stderr, "Failed to generate results\n");
-        return 1;
-    }
+    struct results *head = generate_random_results();
 
     int results_number = 0;
     char str[12];
-    size_t str_size = sizeof(str);  // Here is the new size_t variable
+    size_t str_size = sizeof(str);
 
-    struct results *current = results;
-    while (current != NULL)
+    struct results *current_results = head;
+    while (current_results != NULL)
     {
-        char *block = build_block_result(current->title, current->url, current->description);
+        char *block = build_block_result(current_results->title, current_results->url, current_results->description);
         if (block == NULL)
         {
             fprintf(stderr, "Failed to build block result\n");
-            free_results(results);
+            free_results(head);
             return 1;
         }
-        current->block = block;
-        current = current->next;
+        current_results->block = block;
+        current_results = current_results->next;
         results_number++;
     }
 
@@ -265,16 +259,16 @@ int launch_searcher(const gchar* request)
     if (template == NULL || ip == NULL)
     {
         fprintf(stderr, "Failed to load template or get public IP\n");
-        free_results(results);
+        free_results(head);
         free(ip);
         return 1;
     }
-    
+
     int ret = snprintf(str, str_size, "%d", results_number);
-    if(ret < 0 || (size_t)ret >= str_size)  // Compare with str_size, and cast ret to size_t
+    if(ret < 0 || (size_t)ret >= str_size)
     {
         fprintf(stderr, "Failed to write result number to string\n");
-        free_results(results);
+        free_results(head);
         free(template);
         free(ip);
         return 1;
@@ -283,23 +277,21 @@ int launch_searcher(const gchar* request)
     replace_substring(&template, "{RESEARCHSTR}", (char*) request);
     replace_substring(&template, "{IPLOCATION}", ip);
     replace_substring(&template, "{RESULTSNUMBER}", str);
-    insert_blocks_into_template(&template, results);
+    insert_blocks_into_template(&template, head);
 
     array_to_file("interface/results/generated_page.html", template);
 
-    // Open the generated page in the default browser.
     int status = system("xdg-open interface/results/generated_page.html");
     if (status == -1)
     {
         fprintf(stderr, "Failed to open generated page in the default browser\n");
-        free_results(results);
+        free_results(head);
         free(template);
         free(ip);
         return 1;
     }
-    // Cleanup
-    
-    free_results(results);
+
+    free_results(head);
     free(template);
     free(ip);
 
