@@ -62,7 +62,7 @@ void parse(const char* path)
             snprintf(sub_path, sizeof(sub_path), "%s/%s", path, entry->d_name);
             printf("Directory: %s\n", sub_path);
 
-            char index_path[512];
+            char index_path[1024];
             snprintf(index_path, sizeof(index_path), "%s/index.html", sub_path);
 
             struct stat buffer;

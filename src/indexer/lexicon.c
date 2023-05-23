@@ -64,7 +64,7 @@ int check_word(char *word) {
   int num_stop_words = sizeof(stop_words) / sizeof(stop_words[0]);
   
   int word_length = strlen(word);
-  sb_symbol *stemmed_word = sb_stemmer_stem(stemmer, (const sb_symbol *)word, word_length);
+  const sb_symbol *stemmed_word = sb_stemmer_stem(stemmer, (const sb_symbol *)word, word_length);
   if (!stemmed_word) {
     printf("Error stemming word\n");
     return 1;

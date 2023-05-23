@@ -34,8 +34,8 @@ $(BIN): $(OBJ)
 
 clean:
 	rm -f $(OBJ) $(BIN)
-	rm ../barrels/*
 	rm reverse_vector.db
+	rm ../barrels/*
 
 
 
